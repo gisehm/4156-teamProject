@@ -24,10 +24,7 @@ jobs:
         cache: maven
     - name: Build with Maven
       run: mvn --batch-mode clean verify
-      working-directory: ./MealPlanningService
     - name: Run Checkstyle (Fail on violations)
       run: mvn checkstyle:check
-      working-directory: ./MealPlanningService
     - name: Generate Checkstyle Report
       run: mvn checkstyle:checkstyle
-      working-directory: ./MealPlanningService
