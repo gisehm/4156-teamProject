@@ -22,7 +22,7 @@ public final class Recipe {
   private String diet;
 
   /** The total time to make recipe. */
-  private int totalTime;
+  private int totalTimeMins;
 
   /** The recipe ingredients. */
   private String ingredients;
@@ -38,15 +38,15 @@ public final class Recipe {
   /**
    * Constructs a recipe.
    *
-   * @param id           the recipe ID
-   * @param name         the recipe name
-   * @param url          the recipe url
-   * @param description  the recipe description
-   * @param course       the recipe meal course
-   * @param diet         the recipe's diet type
-   * @param totalTime    the total recipee time
-   * @param ingredients  the recipe ingredients
-   * @param instructions the recipe instructions
+   * @param id            the recipe ID
+   * @param name          the recipe name
+   * @param url           the recipe url
+   * @param description   the recipe description
+   * @param course        the recipe meal course
+   * @param diet          the recipe's diet type
+   * @param totalTimeMins the total recipee time
+   * @param ingredients   the recipe ingredients
+   * @param instructions  the recipe instructions
    */
   public Recipe(
       final String id,
@@ -55,7 +55,7 @@ public final class Recipe {
       final String description,
       final String course,
       final String diet,
-      final int totalTime,
+      final int totalTimeMins,
       final String ingredients,
       final String instructions) {
     this.id = id;
@@ -64,7 +64,7 @@ public final class Recipe {
     this.description = description;
     this.course = course;
     this.diet = diet;
-    this.totalTime = totalTime;
+    this.totalTimeMins = totalTimeMins;
     this.ingredients = ingredients;
     this.instructions = instructions;
   }
@@ -137,8 +137,8 @@ public final class Recipe {
    *
    * @return the total time
    */
-  public int getTotalTime() {
-    return totalTime;
+  public int getTotalTimeMins() {
+    return totalTimeMins;
   }
 
   /**

@@ -6,7 +6,7 @@ import java.util.List;
 public class RecipeRequest {
 
     /** The client's diet preferences. */
-    private String diet;
+    private List<String> diet;
 
     /** The meal course. */
     private String course;
@@ -24,7 +24,7 @@ public class RecipeRequest {
      *
      * @return the diet
      */
-    public String getDiet() {
+    public List<String> getDiet() {
         return diet;
     }
 
@@ -33,7 +33,7 @@ public class RecipeRequest {
      *
      * @param diet the diet
      */
-    public void setDiet(final String diet) {
+    public void setDiet(final List<String> diet) {
         this.diet = diet;
     }
 
