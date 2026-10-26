@@ -1,5 +1,6 @@
 package com.coms4156.mealplanningservice.model;
 
+import com.coms4156.mealplanningservice.mealplan.PlannedDay;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +29,7 @@ public final class MealPlan {
   private Integer maxPrepTimeMins;
 
   /** The meals planned for each day, in order. */
-  private List<DayPlan> schedule = new ArrayList<>();
+  private List<PlannedDay> schedule = new ArrayList<>();
 
   /** Default constructor. */
   public MealPlan() {
@@ -55,7 +56,7 @@ public final class MealPlan {
       final List<String> allergens,
       final Integer maxCalories,
       final Integer maxPrepTimeMins,
-      final List<DayPlan> schedule) {
+      final List<PlannedDay> schedule) {
     this.id = id;
     this.clientId = clientId;
     this.timeFrame = timeFrame;
@@ -197,7 +198,7 @@ public final class MealPlan {
    *
    * @return the meals planned for each day
    */
-  public List<DayPlan> getSchedule() {
+  public List<PlannedDay> getSchedule() {
     return schedule;
   }
 
@@ -206,7 +207,7 @@ public final class MealPlan {
    *
    * @param schedule the meals planned for each day
    */
-  public void setSchedule(final List<DayPlan> schedule) {
+  public void setSchedule(final List<PlannedDay> schedule) {
     this.schedule = schedule;
   }
 }

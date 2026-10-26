@@ -1,15 +1,16 @@
 package com.coms4156.mealplanningservice;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.coms4156.mealplanningservice.model.DayPlan;
+import com.coms4156.mealplanningservice.mealplan.MealType;
+import com.coms4156.mealplanningservice.mealplan.PlannedDay;
+import com.coms4156.mealplanningservice.mealplan.PlanningRecipe;
 import com.coms4156.mealplanningservice.model.MealPlan;
-import com.coms4156.mealplanningservice.model.PlannedMeal;
-import com.coms4156.mealplanningservice.model.Recipe;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,24 +20,22 @@ class MealPlanModelTests {
 
   private ObjectMapper objectMapper;
 
+  private PlannedDay monday;
+
   private MealPlan plan;
 
   @BeforeEach
   void setUp() {
     objectMapper = new ObjectMapper();
-    Recipe recipe =
-        new Recipe(
-            "recipe-1",
-            "Veg Pulao",
-            "https://example.com/veg-pulao",
-            "A simple rice dish",
-            "Lunch",
-            "Vegetarian",
-            45,
-            "Rice|Carrot|Peas",
-            "Cook the rice|Add the vegetables");
-    DayPlan monday =
-        new DayPlan("monday", List.of(new PlannedMeal("lunch", recipe)));
+    monday =
+        new PlannedDay(
+            DayOfWeek.MONDAY,
+            new PlanningRecipe(
+                "recipe-1", MealType.BREAKFAST, new BigDecimal("400"), 10),
+            new PlanningRecipe(
+                "recipe-2", MealType.LUNCH, new BigDecimal("600"), 20),
+            new PlanningRecipe(
+                "recipe-3", MealType.DINNER, new BigDecimal("700"), 30));
     plan =
         new MealPlan(
             "plan-1",
@@ -64,6 +63,30 @@ class MealPlanModelTests {
   }
 
   @Test
+  void roundTripKeepsEveryMealOfTheDay() throws Exception {
+    String json = objectMapper.writeValueAsString(plan);
+
+    MealPlan loaded = objectMapper.readValue(json, MealPlan.class);
+
+    PlannedDay day = loaded.getSchedule().get(0);
+    assertEquals(monday, day);
+    assertEquals(DayOfWeek.MONDAY, day.day());
+    assertEquals("recipe-2", day.lunch().sourceRecipeId());
+    assertEquals(MealType.DINNER, day.dinner().mealType());
+    assertEquals(30, day.dinner().totalTimeMinutes());
+  }
+
+  @Test
+  void roundTripKeepsTheCaloriesNeededToRecheckADay() throws Exception {
+    String json = objectMapper.writeValueAsString(plan);
+
+    MealPlan loaded = objectMapper.readValue(json, MealPlan.class);
+
+    PlannedDay day = loaded.getSchedule().get(0);
+    assertEquals(0, new BigDecimal("1700").compareTo(day.totalCalories()));
+  }
+
+  @Test
   void roundTripKeepsTheConstraintsUsedToBuildThePlan() throws Exception {
     String json = objectMapper.writeValueAsString(plan);
 
@@ -84,21 +107,6 @@ class MealPlanModelTests {
 
     assertNull(loaded.getMaxCalories());
     assertNull(loaded.getMaxPrepTimeMins());
-  }
-
-  @Test
-  void roundTripKeepsTheRecipeInsideTheMeal() throws Exception {
-    String json = objectMapper.writeValueAsString(plan);
-
-    MealPlan loaded = objectMapper.readValue(json, MealPlan.class);
-
-    DayPlan day = loaded.getSchedule().get(0);
-    assertEquals("monday", day.getDay());
-    PlannedMeal meal = day.getMeals().get(0);
-    assertEquals("lunch", meal.getMealType());
-    assertNotNull(meal.getRecipe());
-    assertEquals("Veg Pulao", meal.getRecipe().getName());
-    assertEquals(45, meal.getRecipe().getTotalTimeMins());
   }
 
   @Test
