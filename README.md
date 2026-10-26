@@ -19,6 +19,80 @@ In order to build and use this service you must install the following (This guid
 
 6. If you wish to run the style checker you can with ```mvn checkstyle:check``` or ```mvn checkstyle:checkstyle``` if you wish to generate the report.
 
+## API Endpoints
+
+All endpoints are under `/v1`. Every endpoint except `POST /v1/clients` needs an `X-API-Key` header holding the API key of a registered client. A client can only reach its own data: its key must match the `client_id` in the URL. Errors are returned as JSON in the form `{"error": "<message>"}`.
+
+Each endpoint below lists its inputs, outputs, side effects, status codes, and any required call order.
+
+### GET /v1/clients/{client_id}/mealplan/{mealplan_id}
+
+Retrieves one saved meal plan.
+
+**Inputs**
+
+| Where | Name | Description |
+| --- | --- | --- |
+| Header | `X-API-Key` | The API key of the client that owns the plan |
+| Path | `client_id` | The ID of the client that owns the plan |
+| Path | `mealplan_id` | The ID of the meal plan to retrieve |
+
+**Output (200)**: the stored meal plan as JSON.
+
+| Field | Description |
+| --- | --- |
+| `id` | The meal plan ID |
+| `clientId` | The ID of the client that owns the plan |
+| `timeFrame` | `day` or `week` |
+| `diet` | The diets the plan was built for (list) |
+| `allergens` | The allergens the plan avoids (list) |
+| `maxCalories` | The most calories allowed per day, or `null` if there was no limit |
+| `maxPrepTimeMins` | The longest preparation time in minutes, or `null` if there was no limit |
+| `schedule` | A list of days. Each has `day` and the three meals `breakfast`, `lunch` and `dinner` |
+
+Each meal holds `sourceRecipeId`, `mealType`, `calories` and `totalTimeMinutes`. Recipes are referenced by ID, so full recipe details (name, ingredients) are not repeated inside the plan.
+
+**Side effects**: none. This is a read-only call.
+
+**Status codes**
+
+| Code | When |
+| --- | --- |
+| 200 | The plan exists and belongs to the client |
+| 401 | The `X-API-Key` header is missing or is not a registered key |
+| 403 | The key is valid but belongs to a different client than `client_id` in the path |
+| 404 | The client has no meal plan with that ID. Another client's plan also returns 404, so plan IDs cannot be probed |
+| 500 | A storage file could not be read |
+
+**Call order**: the client must be registered first (`POST /v1/clients` returns its `client_id` and `api_key`), and the meal plan must already exist. Plans are created by `POST /v1/clients/{client_id}/mealplan`. That endpoint is still in progress, so for now a plan only exists if it has been added to `MealPlanningService/src/main/resources/data/mealplans.json` (a list of meal plans, empty by default).
+
+**Example scenario**
+
+1. Start the service: `mvn spring-boot:run` from the `MealPlanningService` folder (it listens on `http://127.0.0.1:8080`).
+2. Add a plan owned by a registered client to `mealplans.json`, for example one with `"id": "demo-plan-1"` and `"clientId"` set to that client's ID from `clients.json`.
+3. Request it with that client's ID and API key:
+
+```
+curl http://127.0.0.1:8080/v1/clients/b649544e-c51d-4e89-8f3b-cc83f37e8c49/mealplan/demo-plan-1 \
+  -H "X-API-Key: 540ba996-2ae9-4f72-8b4f-014b463bc4d7"
+```
+
+Response (`200`):
+
+```
+{"id":"demo-plan-1","clientId":"b649544e-c51d-4e89-8f3b-cc83f37e8c49","timeFrame":"day","diet":["Vegetarian"],"allergens":["peanuts"],"maxCalories":1800,"maxPrepTimeMins":40,"schedule":[{"day":"MONDAY","breakfast":{"sourceRecipeId":"r1","mealType":"BREAKFAST","calories":400,"totalTimeMinutes":10},"lunch":{"sourceRecipeId":"r2","mealType":"LUNCH","calories":600,"totalTimeMinutes":20},"dinner":{"sourceRecipeId":"r3","mealType":"DINNER","calories":700,"totalTimeMinutes":30}}]}
+```
+
+**Ways it should not work** (each returns an error and changes nothing):
+
+| Request | Result | Why |
+| --- | --- | --- |
+| No `X-API-Key` header | 401 `{"error":"a valid X-API-Key header is required"}` | The service cannot tell who is asking |
+| An unknown API key | 401 (same body) | The key does not belong to any registered client |
+| A valid key from client B on client A's URL | 403 `{"error":"this API key cannot access that client"}` | A client may only read its own data |
+| Client B's key and client B's ID, but client A's plan ID | 404 `{"error":"meal plan not found"}` | The plan is not B's, and the service does not reveal that it exists |
+| A plan ID that does not exist | 404 `{"error":"meal plan not found"}` | There is nothing to return |
+
 ## Running Tests
 
 The unit tests are located under the directory ```MealPlanningService/src/test/java/com/coms4156/mealplanningservice```.

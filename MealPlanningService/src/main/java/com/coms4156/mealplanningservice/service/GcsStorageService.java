@@ -38,6 +38,7 @@ public final class GcsStorageService implements StorageService {
     String[] files = {
         "clients.json",
         "food_recipes.json",
+        "mealplans.json",
     };
     for (String fileName : files) {
       BlobId blobId = BlobId.of(bucketName, fileName);

@@ -1,6 +1,7 @@
 package com.coms4156.mealplanningservice.service;
 
 import com.coms4156.mealplanningservice.model.Client;
+import com.coms4156.mealplanningservice.model.MealPlan;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
@@ -16,6 +17,9 @@ public class MealPlanningService {
 
   /** Name of the file that stores the registered clients. */
   private static final String CLIENTS_FILE = "clients.json";
+
+  /** Name of the file that stores the saved meal plans. */
+  private static final String MEAL_PLANS_FILE = "mealplans.json";
 
   /** The object mapper. */
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -49,6 +53,32 @@ public class MealPlanningService {
             storageService.readFile(CLIENTS_FILE), new TypeReference<>() { });
     return clients.stream()
         .filter(client -> apiKey.equals(client.getApiKey()))
+        .findFirst();
+  }
+
+  /**
+   * Finds a saved meal plan that belongs to the given client.
+   *
+   * <p>A plan owned by a different client is treated as not found, so one
+   * client cannot learn whether another client's plan ID exists.
+   *
+   * @param clientId the ID of the client that must own the plan
+   * @param mealPlanId the ID of the meal plan to find
+   * @return the meal plan, or empty if the client has no plan with that ID
+   * @throws IOException if the meal plans file cannot be read
+   */
+  public Optional<MealPlan> findMealPlan(
+      final String clientId, final String mealPlanId) throws IOException {
+    if (clientId == null || mealPlanId == null) {
+      return Optional.empty();
+    }
+    List<MealPlan> mealPlans =
+        objectMapper.readValue(
+            storageService.readFile(MEAL_PLANS_FILE),
+            new TypeReference<>() { });
+    return mealPlans.stream()
+        .filter(plan -> clientId.equals(plan.getClientId()))
+        .filter(plan -> mealPlanId.equals(plan.getId()))
         .findFirst();
   }
 
