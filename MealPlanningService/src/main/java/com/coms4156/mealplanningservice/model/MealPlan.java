@@ -21,6 +21,12 @@ public final class MealPlan {
   /** The allergens no recipe in the plan contains. */
   private List<String> allergens = new ArrayList<>();
 
+  /** The most calories allowed per day, or null if there is no limit. */
+  private Integer maxCalories;
+
+  /** The longest preparation time in minutes, or null if no limit. */
+  private Integer maxPrepTimeMins;
+
   /** The meals planned for each day, in order. */
   private List<DayPlan> schedule = new ArrayList<>();
 
@@ -32,12 +38,14 @@ public final class MealPlan {
   /**
    * Constructs a meal plan.
    *
-   * @param id        the meal plan ID
-   * @param clientId  the ID of the owning client
-   * @param timeFrame the time frame the plan covers
-   * @param diet      the diets the plan satisfies
-   * @param allergens the allergens the plan avoids
-   * @param schedule  the meals planned for each day
+   * @param id              the meal plan ID
+   * @param clientId        the ID of the owning client
+   * @param timeFrame       the time frame the plan covers
+   * @param diet            the diets the plan satisfies
+   * @param allergens       the allergens the plan avoids
+   * @param maxCalories     the most calories allowed per day, may be null
+   * @param maxPrepTimeMins the longest preparation time, may be null
+   * @param schedule        the meals planned for each day
    */
   public MealPlan(
       final String id,
@@ -45,12 +53,16 @@ public final class MealPlan {
       final String timeFrame,
       final List<String> diet,
       final List<String> allergens,
+      final Integer maxCalories,
+      final Integer maxPrepTimeMins,
       final List<DayPlan> schedule) {
     this.id = id;
     this.clientId = clientId;
     this.timeFrame = timeFrame;
     this.diet = diet;
     this.allergens = allergens;
+    this.maxCalories = maxCalories;
+    this.maxPrepTimeMins = maxPrepTimeMins;
     this.schedule = schedule;
   }
 
@@ -142,6 +154,42 @@ public final class MealPlan {
    */
   public void setAllergens(final List<String> allergens) {
     this.allergens = allergens;
+  }
+
+  /**
+   * Gets the daily calorie limit.
+   *
+   * @return the most calories allowed per day, or null if there is no limit
+   */
+  public Integer getMaxCalories() {
+    return maxCalories;
+  }
+
+  /**
+   * Sets the daily calorie limit.
+   *
+   * @param maxCalories the most calories allowed per day, may be null
+   */
+  public void setMaxCalories(final Integer maxCalories) {
+    this.maxCalories = maxCalories;
+  }
+
+  /**
+   * Gets the preparation time limit.
+   *
+   * @return the longest preparation time in minutes, or null if no limit
+   */
+  public Integer getMaxPrepTimeMins() {
+    return maxPrepTimeMins;
+  }
+
+  /**
+   * Sets the preparation time limit.
+   *
+   * @param maxPrepTimeMins the longest preparation time, may be null
+   */
+  public void setMaxPrepTimeMins(final Integer maxPrepTimeMins) {
+    this.maxPrepTimeMins = maxPrepTimeMins;
   }
 
   /**
