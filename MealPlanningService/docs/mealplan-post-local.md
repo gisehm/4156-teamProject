@@ -43,6 +43,11 @@ the plan, and writes it once. Existing plans are retained. The UUID and
 `clientId` are what GET uses to find the plan. This is a single-process file
 operation, not a database transaction or a distributed lock.
 
+Local storage writes the complete content to a temporary file in the same
+directory, then atomically replaces the destination. Concurrent readers see
+either complete version. If atomic replacement is unsupported or fails, the
+write reports an error rather than falling back to an in-place overwrite.
+
 | Status | Meaning | Plan write |
 | --- | --- | --- |
 | 201 | Complete plan saved | One append |
@@ -96,10 +101,13 @@ of the full production POST requirements.
 
 ## Verification snapshot (October 26, 2026)
 
-JDK 25 `clean verify`: 128 tests, zero failures, errors, or skips; the project's
-configured Checkstyle passes. A separate check of the nine changed Java classes,
-including the four new test classes, also reports zero violations. JaCoCo branch
+JDK 25 `clean verify`: 131 tests, zero failures, errors, or skips; the project's
+configured Checkstyle passes. A separate check of the ten changed Java classes,
+including the five new test classes, also reports zero violations. JaCoCo branch
 coverage is 151/170 (88.82%), retaining the existing GCS exclusion.
 Live localhost calls verified 201 creation followed by 200 GET with equal data,
 retention of an earlier plan, ownership rejection, 400/401/403/422 failures
 without plan changes, and corrupt-storage 500 without overwriting the bad data.
+The concurrent-read regression reproduced partial JSON with the former in-place
+write and passes with atomic replacement. Storage tests also cover creating and
+replacing files, and temporary-file cleanup after a rejected replacement.
