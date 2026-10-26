@@ -37,3 +37,10 @@ Within the `MealPlanningService` folder run this in terminal: `pmd check -d src 
 ## Static Code Analysis
 
 We used PMD to perform static analysis on our codebase,
+
+## Meal-plan generator review
+
+This change adds the meal-selection algorithm and its focused tests for MPS-8.
+It does not yet add the POST endpoint. See the
+[algorithm scope and verification](MealPlanningService/docs/mealplan-generator.md).
+With JDK 25 selected, run `sh mvnw clean verify` from `MealPlanningService`.
