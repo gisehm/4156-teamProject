@@ -103,6 +103,16 @@ Response (`200`):
 | Client B's key and client B's ID, but client A's plan ID | 404 `{"error":"meal plan not found"}` | The plan is not B's, and the service does not reveal that it exists |
 | A plan ID that does not exist | 404 `{"error":"meal plan not found"}` | There is nothing to return |
 
+## API Tests (Postman)
+
+The Postman collection is in `MealPlanningService/postman/MealPlanningService.postman_collection.json`. It registers two clients, then checks the success, 400, 401, 403, 404 and 409 responses of the endpoints above. Each request has assertions on the status code and, for errors, the message.
+
+1. Start the service with the demo profile, which POST /mealplan needs, and a private data folder containing `clients.json` and `mealplans.json` (each just `[]`) so the committed seed data is not changed:
+   `java -jar target/MealPlanningService-0.0.1-SNAPSHOT.jar --spring.profiles.active=local,mealplan-demo --storage.local-directory=/absolute/path/to/private-data --server.address=127.0.0.1 --server.port=8080`
+2. Import the collection into Postman and run it with the Collection Runner, or from the command line: `newman run MealPlanningService/postman/MealPlanningService.postman_collection.json --env-var baseUrl=http://127.0.0.1:8080`
+
+The requests depend on each other (client A and B, then the plan), so run them in order.
+
 ## Running Tests
 
 The unit tests are located under the directory ```MealPlanningService/src/test/java/com/coms4156/mealplanningservice```.
