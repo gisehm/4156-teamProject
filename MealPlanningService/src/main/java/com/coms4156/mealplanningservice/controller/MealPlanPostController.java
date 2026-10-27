@@ -45,9 +45,12 @@ public final class MealPlanPostController {
   /**
    * Creates a saved plan for the authenticated client.
    *
-   * @param apiKey caller's API key
+   * The API key and body are required. Spring passes missing values as null
+   * so authentication runs before body validation and returns JSON errors.
+   *
+   * @param apiKey required caller API key; missing or unknown returns 401
    * @param clientId path client, which must own the key
-   * @param body documented snake_case request JSON
+   * @param body required snake_case request JSON; missing or blank returns 400
    * @return 201 with shared MealPlan; 400, 401, 403 or 422 on rejection
    * @throws IOException if storage fails, handled as 500 below
    */

@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 /**
  * Explicitly synthetic local candidates, not enriched real catalog recipes.
  *
- * <p>Every fixture has 500 calories. Diet and allergen facts are preset test
+ * Every fixture has 500 calories. Diet and allergen facts are preset test
  * metadata, not nutrition calculations or verified food safety information.
  */
 @Service
