@@ -25,6 +25,120 @@ All endpoints are under `/v1`. Every endpoint except `POST /v1/clients` needs an
 
 Each endpoint below lists its inputs, outputs, side effects, status codes, and any required call order.
 
+### POST /v1/clients
+
+Registers a new client. This is the only endpoint that does not need an `X-API-Key` header.
+
+**Inputs**
+
+| Where | Name | Description |
+| --- | --- | --- |
+| Body | `name` | The client's name. Required, must not be blank, and is trimmed |
+
+**Output (201)**: the new client as JSON.
+
+| Field | Description |
+| --- | --- |
+| `client_id` | The generated client ID, used in the path of the other endpoints |
+| `name` | The client's name |
+| `api_key` | The generated API key, sent as `X-API-Key` to the other endpoints |
+
+**Side effects**: the new client is added to `clients.json`.
+
+**Status codes**
+
+| Code | When |
+| --- | --- |
+| 201 | The client was registered |
+| 400 | The body is missing, or `name` is missing or blank |
+| 409 | The name is already registered (compared ignoring case and surrounding spaces) |
+| 500 | The clients file could not be read or written |
+
+**Call order**: none. Call this first, since every other endpoint needs the returned `client_id` and `api_key`.
+
+**Example scenario**
+
+1. Start the service: `mvn spring-boot:run` from the `MealPlanningService` folder (it listens on `http://127.0.0.1:8080`).
+2. Register a client:
+
+```
+curl -X POST http://127.0.0.1:8080/v1/clients \
+  -H "Content-Type: application/json" -d '{"name":"Dana"}'
+```
+
+Response (`201`):
+
+```
+{"client_id":"8a42cd6d-d235-40de-a9cf-9eeb4f001cbe","name":"Dana","api_key":"397da63b-3b42-444e-b552-cb8715365c9e"}
+```
+
+**Ways it should not work** (each returns an error and changes nothing):
+
+| Request | Result | Why |
+| --- | --- | --- |
+| No body, or `{"name":"  "}` | 400 `{"error":"name is required and must not be blank"}` | There is no name to register |
+| `{"name":"alice"}` when `Alice` exists | 409 `{"error":"Client name already registered: alice"}` | Names must be unique |
+
+### POST /v1/clients/{client_id}/recipes
+
+Finds the catalog recipe that best matches the client's constraints: of all recipes that pass every constraint, the one with the shortest total time.
+
+**Inputs**
+
+| Where | Name | Description |
+| --- | --- | --- |
+| Header | `X-API-Key` | The API key of the client in the path |
+| Path | `client_id` | The ID of the client making the request |
+| Body | `meal_type` | Required. The course to match, ignoring case (e.g. `breakfast`, `lunch`, `dinner`, `snack`) |
+| Body | `max_prep_time_mins` | Optional. The longest total time in minutes |
+| Body | `diet_type` | Optional list from `vegetarian`, `vegan`, `high_protein`, `low_fat`, `low_carb` |
+| Body | `allergens` | Optional list from `peanuts`, `tree_nuts`, `dairy`, `eggs`, `soy`, `wheat`, `fish`, `shellfish`, `sesame` |
+| Body | `max_calories` | Optional. Accepted but not applied yet, since the catalog has no nutrition data (same for `low_fat` and `low_carb`) |
+
+**Output (200)**: the recipe as JSON, with `recipe_id`, `meal_type`, `name`, `description`, `url`, `ingredients` (list) and `total_time_mins`.
+
+**Side effects**: none. The recipe is not yet saved to the client's library.
+
+**Status codes**
+
+| Code | When |
+| --- | --- |
+| 200 | A recipe matches the constraints |
+| 400 | The body or `meal_type` is missing, a number is not positive, or a diet or allergen tag is not supported |
+| 401 | The `X-API-Key` header is missing or is not a registered key |
+| 403 | The key is valid but belongs to a different client than `client_id` in the path |
+| 404 | No recipe matches all of the constraints |
+| 500 | A storage file could not be read |
+
+**Call order**: register the client first (`POST /v1/clients` returns its `client_id` and `api_key`).
+
+**Example scenario**
+
+1. Start the service as above.
+2. Ask for a vegan, peanut-free breakfast that takes at most 30 minutes:
+
+```
+curl -X POST http://127.0.0.1:8080/v1/clients/b649544e-c51d-4e89-8f3b-cc83f37e8c49/recipes \
+  -H "X-API-Key: 540ba996-2ae9-4f72-8b4f-014b463bc4d7" -H "Content-Type: application/json" \
+  -d '{"meal_type":"breakfast","max_prep_time_mins":30,"diet_type":["vegan"],"allergens":["peanuts"]}'
+```
+
+Response (`200`, description shortened):
+
+```
+{"recipe_id":"13EEA8BB8-2860","meal_type":"breakfast","url":"https://www.archanaskitchen.com/the-green-flush-healthy-fresh-juice-recipe","name":"Spiced Bottle Gourd And Spinach Juice Recipe","description":"The Green Flush, is a healthy green juice ...","ingredients":["Bottle gourd (lauki)","Spinach Leaves (Palak)","Cucumber","Ginger","Cumin seeds","Black Salt","Lemon","Water"],"total_time_mins":10}
+```
+
+**Ways it should not work** (each returns an error and changes nothing):
+
+| Request | Result | Why |
+| --- | --- | --- |
+| No `X-API-Key` header, or an unknown key | 401 `{"error":"a valid X-API-Key header is required"}` | The service cannot tell who is asking |
+| A valid key from client B on client A's URL | 403 `{"error":"this API key cannot access that client"}` | A client may only act for itself |
+| `{}` | 400 `{"error":"meal_type is required"}` | The meal type is required |
+| `{"meal_type":"lunch","diet_type":["keto"]}` | 400 `{"error":"unsupported diet_type: keto"}` | Only the listed tags are supported (they are case-sensitive) |
+| `{"meal_type":"brunch"}` | 404 `{"error":"no recipe matches the constraints"}` | No catalog recipe has that meal type |
+
 ### POST /v1/clients/{client_id}/mealplan (local fixture integration)
 
 With both `local` and `mealplan-demo` profiles active, POST creates a plan
