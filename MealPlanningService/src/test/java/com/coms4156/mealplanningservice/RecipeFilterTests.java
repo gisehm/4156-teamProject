@@ -32,6 +32,26 @@ class RecipeFilterTests {
   }
 
   @Test
+  void multiWordAllergensMatchWithHyphens() {
+    assertTrue(AllergenChecker.containsAllergen(
+        List.of("All-purpose Flour"), "wheat"));
+    assertTrue(AllergenChecker.containsAllergen(
+        List.of("All - Purpose  flour"), "wheat"));
+  }
+
+  @Test
+  void treeNutsIncludeDatasetVariants() {
+    assertTrue(AllergenChecker.containsAllergen(
+        List.of("Pine nuts"), "tree_nuts"));
+    assertTrue(AllergenChecker.containsAllergen(
+        List.of("Mixed nuts"), "tree_nuts"));
+    assertTrue(AllergenChecker.containsAllergen(
+        List.of("Nutella Spread"), "tree_nuts"));
+    assertFalse(AllergenChecker.containsAllergen(
+        List.of("Nutmeg powder", "Fresh coconut"), "tree_nuts"));
+  }
+
+  @Test
   void isFreeOfChecksEveryAllergen() {
     List<String> ingredients = List.of("Paneer", "Onion", "Salt");
 

@@ -1,5 +1,6 @@
 package com.coms4156.mealplanningservice.service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,7 +29,8 @@ public final class AllergenChecker {
           "noodles", "vermicelli"),
       "tree_nuts", List.of("almond", "almonds", "cashew", "cashews",
           "walnut", "walnuts", "pistachio", "pistachios", "hazelnut",
-          "hazelnuts", "pecan", "pecans", "macadamia", "badam", "kaju"),
+          "hazelnuts", "pecan", "pecans", "macadamia", "badam", "kaju",
+          "pine nut", "pine nuts", "mixed nuts", "nutella"),
       "fish", List.of("fish", "salmon", "tuna", "cod", "sardine",
           "sardines", "mackerel", "anchovy", "anchovies", "tilapia",
           "pomfret", "basa"),
@@ -89,14 +91,18 @@ public final class AllergenChecker {
   }
 
   /**
-   * Builds a pattern that matches any of the words as a whole word.
+   * Builds a pattern that matches any of the words as a whole word. The
+   * words of a multi-word entry may be separated by spaces or hyphens, so
+   * "all purpose flour" also matches "All-purpose Flour".
    *
    * @param words the words to match
    * @return a case-insensitive whole-word pattern
    */
   static Pattern wholeWordPattern(final List<String> words) {
     String alternatives = words.stream()
-        .map(Pattern::quote)
+        .map(word -> Arrays.stream(word.split(" "))
+            .map(Pattern::quote)
+            .collect(Collectors.joining("[\\s-]+")))
         .collect(Collectors.joining("|"));
     return Pattern.compile(
         "\\b(?:" + alternatives + ")\\b", Pattern.CASE_INSENSITIVE);
