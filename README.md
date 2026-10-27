@@ -25,6 +25,16 @@ All endpoints are under `/v1`. Every endpoint except `POST /v1/clients` needs an
 
 Each endpoint below lists its inputs, outputs, side effects, status codes, and any required call order.
 
+### POST /v1/clients/{client_id}/mealplan (local fixture integration)
+
+With both `local` and `mealplan-demo` profiles active, POST creates a plan
+using synthetic recipes and saves the shared `MealPlan` to `mealplans.json`.
+The returned `id` can be passed directly to GET below. The request uses
+`time_frame`, `max_calories`, `diet_type`, `allergens`, and
+`max_prep_time_mins`; the response uses the shared model's camelCase fields.
+See [local POST setup, contract, and limitations](MealPlanningService/docs/mealplan-post-local.md).
+This does not yet implement real catalog nutrition or client-library recipes.
+
 ### GET /v1/clients/{client_id}/mealplan/{mealplan_id}
 
 Retrieves one saved meal plan.
@@ -64,7 +74,7 @@ Each meal holds `sourceRecipeId`, `mealType`, `calories` and `totalTimeMinutes`.
 | 404 | The client has no meal plan with that ID. Another client's plan also returns 404, so plan IDs cannot be probed |
 | 500 | A storage file could not be read |
 
-**Call order**: the client must be registered first (`POST /v1/clients` returns its `client_id` and `api_key`), and the meal plan must already exist. Plans are created by `POST /v1/clients/{client_id}/mealplan`. That endpoint is still in progress, so for now a plan only exists if it has been added to `MealPlanningService/src/main/resources/data/mealplans.json` (a list of meal plans, empty by default).
+**Call order**: register the client first (`POST /v1/clients` returns its `client_id` and `api_key`). In the local fixture integration above, POST then creates the plan. Other profiles require an existing plan in `mealplans.json` (a list of meal plans, empty by default).
 
 **Example scenario**
 
@@ -114,7 +124,6 @@ We used PMD to perform static analysis on our codebase,
 
 ## Meal-plan generator review
 
-This change adds the meal-selection algorithm and its focused tests for MPS-8.
-It does not yet add the POST endpoint. See the
+The meal-selection algorithm remains independent of HTTP and storage. See the
 [algorithm scope and verification](MealPlanningService/docs/mealplan-generator.md).
 With JDK 25 selected, run `sh mvnw clean verify` from `MealPlanningService`.
