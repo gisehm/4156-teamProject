@@ -16,13 +16,16 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-/** Tests scheduling rules; HTTP, candidate filtering, and persistence need separate tests. */
+/**
+ * Tests scheduling rules; HTTP, candidate filtering, and persistence need
+ * separate tests.
+ */
 class MealPlanGeneratorTest {
 
   private final MealPlanGenerator generator = new MealPlanGenerator();
 
   @ParameterizedTest
-  @CsvSource({"1439, false", "1440, true", "1800, true", "1801, false"})
+  @CsvSource({ "1439, false", "1440, true", "1800, true", "1801, false" })
   void acceptsOnlyTheInclusiveDailyCalorieBand(String total, boolean feasible) {
     BigDecimal dinnerCalories = new BigDecimal(total).subtract(new BigDecimal("1000"));
     List<PlanningRecipe> candidates = List.of(
@@ -46,7 +49,7 @@ class MealPlanGeneratorTest {
   }
 
   @ParameterizedTest
-  @CsvSource({"0.0799999999, false", "0.08, true", "0.14, true", "0.1400000001, false"})
+  @CsvSource({ "0.0799999999, false", "0.08, true", "0.14, true", "0.1400000001, false" })
   void comparesFractionalCaloriesWithoutRounding(String dinnerCalories, boolean feasible) {
     List<PlanningRecipe> candidates = List.of(
         recipe("breakfast", MealType.BREAKFAST, "0.08", 10),
@@ -111,7 +114,7 @@ class MealPlanGeneratorTest {
   @Test
   void reportsWednesdayWhenOnlyTwoDistinctBreakfastRecipesExist() {
     List<PlanningRecipe> candidates = candidatesWithThreeChoicesPerMeal();
-    candidates.removeIf(recipe -> recipe.sourceRecipeId().equals("breakfast-2"));
+    candidates.removeIf(recipe -> "breakfast-2".equals(recipe.sourceRecipeId()));
 
     UnfillableMealPlanException failure = assertThrows(UnfillableMealPlanException.class,
         () -> generator.generate(candidates, 7, new BigDecimal("1800")));
@@ -133,7 +136,8 @@ class MealPlanGeneratorTest {
         recipe("D2", MealType.DINNER, "80", 12));
 
     // B0/L1/D0, B1/L0/D1, B2/L2/D2 could form a repeating valid sequence.
-    // The required first choices are B0/L0/D0 and B2/L1/D1, leaving Wednesday at 190 kcal.
+    // The required first choices are B0/L0/D0 and B2/L1/D1, leaving Wednesday at
+    // 190 kcal.
     UnfillableMealPlanException failure = assertThrows(UnfillableMealPlanException.class,
         () -> generator.generate(candidates, 7, new BigDecimal("300")));
 
@@ -143,7 +147,7 @@ class MealPlanGeneratorTest {
   @Test
   void repeatedCopiesOfTheSameSourceCannotBypassTheTwoDayExclusion() {
     List<PlanningRecipe> candidates = candidatesWithThreeChoicesPerMeal();
-    candidates.removeIf(recipe -> recipe.sourceRecipeId().equals("breakfast-2"));
+    candidates.removeIf(recipe -> "breakfast-2".equals(recipe.sourceRecipeId()));
     candidates.add(recipe("breakfast-0", MealType.BREAKFAST, "500.00", 10));
     candidates.add(recipe("breakfast-1", MealType.BREAKFAST, "500.0", 11));
 
@@ -192,7 +196,7 @@ class MealPlanGeneratorTest {
   }
 
   @ParameterizedTest
-  @ValueSource(ints = {0, 2, 6, 8})
+  @ValueSource(ints = { 0, 2, 6, 8 })
   void rejectsUnsupportedPlanLengths(int numberOfDays) {
     assertThrows(IllegalArgumentException.class,
         () -> generator.generate(
@@ -200,7 +204,7 @@ class MealPlanGeneratorTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"0", "-1"})
+  @ValueSource(strings = { "0", "-1" })
   void rejectsNonpositiveDailyCalorieLimits(String calorieLimit) {
     assertThrows(IllegalArgumentException.class,
         () -> generator.generate(

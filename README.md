@@ -2,6 +2,10 @@
 
 This is the accept_cookies repository for our Meal Planning Service (COMS-4156 Fall 2026)
 
+## Links to group Jira Board
+
+Meal Planning Service Jira - https://accept-cookies.atlassian.net/jira/software/projects/MPS/boards/1?sprintStarted=true&filter=&groupBy=none
+
 ## Building and Running a Local Instance
 
 In order to build and use this service you must install the following (This guide assumes Mac but the Maven README has instructions for both Windows and Mac):
@@ -15,9 +19,32 @@ In order to build and use this service you must install the following (This guid
 4. When you open VSCode you have the option to clone from a GitHub repo; paste the following in your terminal
 ```git clone https://github.com/gisehm/4156-teamProject.git```.
 
-5. In order to build the project with maven you can run ```mvn spring-boot:run```. You can run the tests either via the test files described below or by running ```mvn test``` from the ```IndividualProject``` folder.
+5. In order to build the project with maven you can run ```mvn spring-boot:run```. You can run the tests either via the test files described below or by running ```mvn test``` from the ```MealPlanningService``` folder.
 
 6. If you wish to run the style checker you can with ```mvn checkstyle:check``` or ```mvn checkstyle:checkstyle``` if you wish to generate the report.
+
+The endpoints are listed below in the "API Endpoints" section, with brief descriptions of their parameters. For in-depth examples and system-level tests of them, see the section "Postman Test Documentation" below.
+
+## Running Tests
+
+The unit tests are located under the directory ```MealPlanningService/src/test/java/com/coms4156/mealplanningservice```.
+
+From there, you can press the 'Run' button next to any ```@Test``` section to see the results.
+
+To see the system-level tests, see the section "Postman Test Documentation" below.
+
+## Postman Test Documentation
+
+When running tests in Postman, point them to: 
+http://localhost:8080 /endpoint
+
+Specific Tests confirming proper returning of HTTP status codes and content types are ran during Continuous Integration as well.
+
+The collection is `MealPlanningService/postman/MealPlanningService.postman_collection.json`. It registers two clients, then checks the success, 400, 401, 403, 404 and 409 responses of the client, meal plan and recipe endpoints, with assertions on each status code and, for errors, the message. The requests depend on each other (client A and B, then the plan), so run them in order.
+
+1. Start the service with the demo profile, which POST /mealplan needs, and a private data folder containing `clients.json` and `mealplans.json` (each just `[]`) so the committed seed data is not changed:
+   `java -jar target/MealPlanningService-0.0.1-SNAPSHOT.jar --spring.profiles.active=local,mealplan-demo --storage.local-directory=/absolute/path/to/private-data --server.address=127.0.0.1 --server.port=8080`
+2. Import the collection into Postman and run it with the Collection Runner, or from the command line: `newman run MealPlanningService/postman/MealPlanningService.postman_collection.json --env-var baseUrl=http://127.0.0.1:8080`
 
 ## API Endpoints
 
@@ -103,25 +130,21 @@ Response (`200`):
 | Client B's key and client B's ID, but client A's plan ID | 404 `{"error":"meal plan not found"}` | The plan is not B's, and the service does not reveal that it exists |
 | A plan ID that does not exist | 404 `{"error":"meal plan not found"}` | There is nothing to return |
 
-## API Tests (Postman)
-
-The Postman collection is in `MealPlanningService/postman/MealPlanningService.postman_collection.json`. It registers two clients, then checks the success, 400, 401, 403, 404 and 409 responses of the endpoints above. Each request has assertions on the status code and, for errors, the message.
-
-1. Start the service with the demo profile, which POST /mealplan needs, and a private data folder containing `clients.json` and `mealplans.json` (each just `[]`) so the committed seed data is not changed:
-   `java -jar target/MealPlanningService-0.0.1-SNAPSHOT.jar --spring.profiles.active=local,mealplan-demo --storage.local-directory=/absolute/path/to/private-data --server.address=127.0.0.1 --server.port=8080`
-2. Import the collection into Postman and run it with the Collection Runner, or from the command line: `newman run MealPlanningService/postman/MealPlanningService.postman_collection.json --env-var baseUrl=http://127.0.0.1:8080`
-
-The requests depend on each other (client A and B, then the plan), so run them in order.
-
-## Running Tests
-
-The unit tests are located under the directory ```MealPlanningService/src/test/java/com/coms4156/mealplanningservice```.
-
-From there, you can press the 'Run' button next to any ```@Test``` section to see the results.
+### DELETE /v1/items/{id}
+* Expected Input Parameters: apiKey ("X-API-Key" final String in the request header), clientId (final String in path variable), mealplanId (final String in path variable)
+* Expected Output: HTTP 204 No Content status code
+* Deletes a client's mealplan by ID.
+* Upon Success: HTTP 204 Status Code is returned.
+* Upon Failure: 
+    * HTTP 404 Status Code is returned if the mealplan ID, client ID or API Key does not exist or is invalid.
 
 ## Style Checking Report
 
-We used the tool "checkstyle" to check the style of our code and generate style checking reports.
+We used the tool "checkstyle" to check the style of our code and generate style checking reports. Here is the report as of the day of 10/26/2026 ![Project Screenshot](reports/checkstylereport.png)
+
+## Branch Coverage Reporting
+
+We used JaCoCo to perform branch analysis in order to see the branch coverage of the relevant code within the code base. See below for screenshots demonstrating output. ![Project Screenshot](reports/jacocoreport.png)
 
 ## Bug Testing
 Utilized PMD for MacOS to squash bugs (https://pmd.github.io/). 
@@ -130,10 +153,42 @@ Within the `MealPlanningService` folder run this in terminal: `pmd check -d src 
 
 ## Static Code Analysis
 
-We used PMD to perform static analysis on our codebase,
+We used PMD to perform static analysis on our codebase, see below for the most recent output. ![Project Screenshot](reports/pmdreport.png)
 
 ## Meal-plan generator review
 
 The meal-selection algorithm remains independent of HTTP and storage. See the
 [algorithm scope and verification](MealPlanningService/docs/mealplan-generator.md).
 With JDK 25 selected, run `sh mvnw clean verify` from `MealPlanningService`.
+
+## Continuous Integration Report
+
+This repository using GitHub Actions to perform continous integration, to view the latest results go to the following link: https://github.com/gisehm/4156-teamProject/actions/workflows/ci.yml
+
+Click on the latest job on the top under "X workflow runs" then Click 'build' under jobs finally click the drop down next to all the action items to read the logs made during their execution
+
+## Tools Used
+
+This section includes notes on tools and technologies used in building this project, as well as any additional details if applicable.
+
+* GitHub Actions CI
+    * This is enabled via the "Actions" tab on GitHub.
+    * Currently, this just runs a Maven build to make sure the code builds on branch 'main'.
+* Build and dependency manager: Maven
+    * Handles Spring Boot dependencies and plugins (JaCoCo, Checkstyle, PMD) in one pom.xml.
+* Mocking framework: Mockito
+    * To test our recipe-selection and meal-plan logic, we’ll mock that client and return fixed nutrient values.
+* Checkstyle
+    * We use Checkstyle for code reporting.
+* PMD
+    * We are using PMD to do static analysis of our Java code.
+* JUnit
+    * JUnit tests get run automatically as part of the CI pipeline.
+* JaCoCo
+    * We use JaCoCo for generating code coverage reports.
+* Postman
+    * We used Postman for testing that the APIs work.
+* IDE: VS Code
+    * Runs Maven, JUnit, and Checkstyle
+* Project management: Jira
+    * Board with a card per endpoint and per task, so how the work is split across teammates is visible.

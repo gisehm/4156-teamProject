@@ -5,15 +5,16 @@ import java.math.BigDecimal;
 /**
  * The information the scheduler needs about an already eligible recipe.
  *
- * <p>The source ID must remain the same when a catalog recipe is saved in a
+ * The source ID must remain the same when a catalog recipe is saved in a
  * client's library. It is not the ID of that client-specific copy. The caller
  * supplies per-serving calories and performs client ownership, diet, allergen,
  * and preparation-time filtering before scheduling.
  *
- * @param sourceRecipeId stable identity of the underlying recipe
- * @param mealType the recipe's meal slot
- * @param calories computed calories per serving, without rounding by this
- *     scheduler
+ * @param sourceRecipeId   stable identity of the underlying recipe
+ * @param mealType         the recipe's meal slot
+ * @param calories         computed calories per serving, without rounding by
+ *                         this
+ *                         scheduler
  * @param totalTimeMinutes total preparation and cooking time in minutes
  */
 public record PlanningRecipe(
@@ -24,7 +25,7 @@ public record PlanningRecipe(
    * Validates the values required to compare and schedule a recipe.
    *
    * @throws IllegalArgumentException if an identity or meal type is missing, or
-   *     a number is invalid
+   *                                  a number is invalid
    */
   public PlanningRecipe {
     if (sourceRecipeId == null || sourceRecipeId.isBlank()) {

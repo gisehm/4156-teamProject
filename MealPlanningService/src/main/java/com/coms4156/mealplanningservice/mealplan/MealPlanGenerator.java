@@ -14,39 +14,38 @@ import java.util.Set;
 /**
  * Implements the proposal's deterministic, sequential meal-selection algorithm.
  *
- * <p>This class only schedules candidates that the caller has already checked
+ * This class only schedules candidates that the caller has already checked
  * for client access, diet, allergens, and preparation-time limits. It performs
  * no database writes or external API calls. The caller must generate the entire
  * schedule before saving recipes and the plan in one transaction.
  */
 public final class MealPlanGenerator {
   /** Minimum fraction of the daily calorie cap that a day must provide. */
-  private static final BigDecimal MINIMUM_CALORIE_FRACTION =
-      new BigDecimal("0.8");
+  private static final BigDecimal MIN_CALORIE_FRACTION = new BigDecimal("0.8");
 
   /** Orders each meal slot by preparation time and source ID. */
-  private static final Comparator<PlanningRecipe> RECIPE_ORDER =
-      Comparator.comparingInt(PlanningRecipe::totalTimeMinutes)
-          .thenComparing(PlanningRecipe::sourceRecipeId);
+  private static final Comparator<PlanningRecipe> RECIPE_ORDER = Comparator
+      .comparingInt(PlanningRecipe::totalTimeMinutes)
+      .thenComparing(PlanningRecipe::sourceRecipeId);
 
   /**
    * Generates a day or week, choosing each day's first valid
    * breakfast/lunch/dinner combination.
    *
-   * <p>Schedules start on Monday. The one-day label and the source-ID tie-break
+   * Schedules start on Monday. The one-day label and the source-ID tie-break
    * for equal preparation times are explicit defaults where the proposal does
    * not specify a rule. Previous days are never reconsidered: this is the
    * proposed greedy algorithm, not a global weekly optimization.
    *
-   * @param eligibleRecipes the client's eligible library/catalog union, using
-   *     stable source IDs
-   * @param numberOfDays 1 for a day or 7 for a week
+   * @param eligibleRecipes  the client's eligible library/catalog union, using
+   *                         stable source IDs
+   * @param numberOfDays     1 for a day or 7 for a week
    * @param maxDailyCalories the positive daily calorie cap
    * @return an immutable list of complete days in chronological order
-   * @throws IllegalArgumentException if inputs are invalid or duplicate source
-   *     data conflicts
+   * @throws IllegalArgumentException    if inputs are invalid or duplicate
+   *                                     source data conflicts
    * @throws UnfillableMealPlanException if a day cannot satisfy the calorie and
-   *     repetition rules
+   *                                     repetition rules
    */
   public List<PlannedDay> generate(
       final List<PlanningRecipe> eligibleRecipes, final int numberOfDays,
@@ -63,10 +62,10 @@ public final class MealPlanGenerator {
           "The daily calorie cap must be positive.");
     }
 
-    Map<MealType, List<PlanningRecipe>> recipesByType =
-        groupRecipes(eligibleRecipes);
-    BigDecimal minimumCalories =
-        maxDailyCalories.multiply(MINIMUM_CALORIE_FRACTION);
+    Map<MealType, List<PlanningRecipe>> recipesByType = groupRecipes(
+        eligibleRecipes);
+    BigDecimal minimumCalories = maxDailyCalories
+        .multiply(MIN_CALORIE_FRACTION);
     List<PlannedDay> schedule = new ArrayList<>();
 
     for (int dayIndex = 0; dayIndex < numberOfDays; dayIndex++) {
@@ -87,8 +86,8 @@ public final class MealPlanGenerator {
         throw new IllegalArgumentException(
             "An eligible recipe cannot be null.");
       }
-      PlanningRecipe previous =
-          recipesBySource.putIfAbsent(recipe.sourceRecipeId(), recipe);
+      PlanningRecipe previous = recipesBySource
+          .putIfAbsent(recipe.sourceRecipeId(), recipe);
       if (previous != null && !hasSamePlanningData(previous, recipe)) {
         throw new IllegalArgumentException(
             "Conflicting data for source recipe "
@@ -118,8 +117,8 @@ public final class MealPlanGenerator {
 
   private Set<String> recentlyUsedSourceIds(final List<PlannedDay> schedule) {
     Set<String> blockedSourceIds = new HashSet<>();
-    for (int index = Math.max(0, schedule.size() - 2);
-        index < schedule.size(); index++) {
+    for (int index = Math
+        .max(0, schedule.size() - 2); index < schedule.size(); index++) {
       for (PlanningRecipe recipe : schedule.get(index).meals()) {
         blockedSourceIds.add(recipe.sourceRecipeId());
       }
@@ -145,8 +144,8 @@ public final class MealPlanGenerator {
           if (blockedSourceIds.contains(dinner.sourceRecipeId())) {
             continue;
           }
-          BigDecimal total =
-              breakfast.calories().add(lunch.calories()).add(dinner.calories());
+          BigDecimal total = breakfast.calories()
+              .add(lunch.calories()).add(dinner.calories());
           if (total.compareTo(minimumCalories) >= 0
               && total.compareTo(maximumCalories) <= 0) {
             return new PlannedDay(day, breakfast, lunch, dinner);

@@ -10,6 +10,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest
@@ -41,12 +43,40 @@ class ApiControllerTest {
         "[{\"name\":\"recipe-1\",\"url\":\"food.com\",\"description\":\"info\",\"course\":\"lunch\",\"diet\":\"Vegetarian\",\"prep_time\":\"10"
             + " M\",\"cook_time\":\"20"
             + " M\",\"ingredients\":\"Onions|Ginger|Garlic\",\"instructions\":\"steps\"}]");
+    Files.writeString(
+        tempDir.resolve("mealplans.json"),
+        "[{\"id\":\"plan-1\",\"clientId\":\"client-1\",\"timeFrame\":\"week\","
+            + "\"diet\":[\"Vegetarian\"],\"allergens\":[\"peanuts\"],"
+            + "\"maxCalories\":1800,\"maxPrepTimeMins\":40,\"schedule\":["
+            + "{\"day\":\"MONDAY\","
+            + "\"breakfast\":{\"sourceRecipeId\":\"r1\","
+            + "\"mealType\":\"BREAKFAST\",\"calories\":400,"
+            + "\"totalTimeMinutes\":10},"
+            + "\"lunch\":{\"sourceRecipeId\":\"r2\",\"mealType\":\"LUNCH\","
+            + "\"calories\":600,\"totalTimeMinutes\":20},"
+            + "\"dinner\":{\"sourceRecipeId\":\"r3\",\"mealType\":\"DINNER\","
+            + "\"calories\":700,\"totalTimeMinutes\":30}}]},"
+            + "{\"id\":\"plan-2\",\"clientId\":\"client-2\","
+            + "\"timeFrame\":\"day\",\"schedule\":[]}]");
 
     localStorageService.setDirectory(tempDir);
   }
 
   @Test
-  void contextLoads() {
-    // Placeholder so the test class is non-empty. Replace with real tests.
+  void testDeleteItem() throws Exception {
+    // valid id, successful delete
+    mockMvc.perform(delete("/v1/clients/{client_id}/mealplan/{mealplan_id}", "client-1", "plan-1")
+        .header("X-API-Key", "valid-key"))
+        .andExpect(status().isNoContent());
+
+    // invalid api key, fails
+    mockMvc.perform(delete("/v1/clients/{client_id}/mealplan/{mealplan_id}", "client-1", "plan-1")
+        .header("X-API-Key", "invalid-key"))
+        .andExpect(status().isNotFound());
+
+    // invalid item id, fails
+    mockMvc.perform(delete("/v1/clients/{client_id}/mealplan/{mealplan_id}", "client-1", "plan-1")
+        .header("X-API-Key", "valid-key"))
+        .andExpect(status().isNotFound());
   }
 }
