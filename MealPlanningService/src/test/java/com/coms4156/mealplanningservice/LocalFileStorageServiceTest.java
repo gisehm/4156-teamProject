@@ -25,12 +25,12 @@ import org.junit.jupiter.api.io.TempDir;
 class LocalFileStorageServiceTest {
 
   /** Isolates every filesystem operation from the repository's seed files. */
-  @TempDir private Path directory;
+  @TempDir
+  private Path directory;
 
   @Test
   void createsAndReplacesTheRequestedFile() throws IOException {
-    LocalFileStorageService storage =
-        new LocalFileStorageService(directory.toString());
+    LocalFileStorageService storage = new LocalFileStorageService(directory.toString());
 
     storage.writeFile("mealplans.json", "[]");
     assertEquals("[]", storage.readFile("mealplans.json"));
@@ -42,8 +42,7 @@ class LocalFileStorageServiceTest {
 
   @Test
   void concurrentReadersOnlySeeCompleteJsonVersions() throws Exception {
-    LocalFileStorageService storage =
-        new LocalFileStorageService(directory.toString());
+    LocalFileStorageService storage = new LocalFileStorageService(directory.toString());
     String oldJson = "[{\"data\":\"" + "a".repeat(2 * 1024 * 1024) + "\"}]";
     String newJson = "[{\"data\":\"" + "b".repeat(2 * 1024 * 1024) + "\"}]";
     storage.writeFile("mealplans.json", oldJson);
@@ -52,8 +51,7 @@ class LocalFileStorageServiceTest {
     CountDownLatch firstRead = new CountDownLatch(1);
     AtomicBoolean finished = new AtomicBoolean();
     AtomicInteger reads = new AtomicInteger();
-    ExecutorService workers = Executors.newFixedThreadPool(2);
-    try {
+    try (ExecutorService workers = Executors.newFixedThreadPool(2)) {
       Future<?> writer = workers.submit(() -> {
         try {
           assertTrue(start.await(5, TimeUnit.SECONDS));
@@ -93,18 +91,14 @@ class LocalFileStorageServiceTest {
     } finally {
       start.countDown();
       firstRead.countDown();
-      workers.shutdownNow();
-      assertTrue(workers.awaitTermination(5, TimeUnit.SECONDS));
     }
   }
 
   @Test
   void failedReplacementPreservesDestinationAndRemovesTemporaryFile()
       throws IOException {
-    LocalFileStorageService storage =
-        new LocalFileStorageService(directory.toString());
-    Path destination =
-        Files.createDirectory(directory.resolve("mealplans.json"));
+    LocalFileStorageService storage = new LocalFileStorageService(directory.toString());
+    Path destination = Files.createDirectory(directory.resolve("mealplans.json"));
     Path existing = destination.resolve("existing.json");
     Files.writeString(existing, "[{\"id\":\"preserved\"}]");
 

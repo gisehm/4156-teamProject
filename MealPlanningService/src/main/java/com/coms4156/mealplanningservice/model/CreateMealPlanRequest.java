@@ -13,10 +13,10 @@ import java.util.Set;
 /**
  * Validated POST constraints, separate from the saved MealPlan model.
  *
- * @param timeFrame day or week
- * @param maxCalories positive integer daily calorie limit
- * @param dietTypes diets that every selected recipe must satisfy
- * @param allergens allergens to exclude
+ * @param timeFrame       day or week
+ * @param maxCalories     positive integer daily calorie limit
+ * @param dietTypes       diets that every selected recipe must satisfy
+ * @param allergens       allergens to exclude
  * @param maxPrepTimeMins positive preparation limit for each recipe
  */
 public record CreateMealPlanRequest(
@@ -74,7 +74,7 @@ public record CreateMealPlanRequest(
     try {
       root = MAPPER.readTree(body);
     } catch (JsonProcessingException e) {
-      throw new IllegalArgumentException("a valid JSON object is required");
+      throw new IllegalArgumentException("a valid JSON object is required", e);
     }
     if (root == null || !root.isObject()) {
       throw new IllegalArgumentException("a JSON object is required");

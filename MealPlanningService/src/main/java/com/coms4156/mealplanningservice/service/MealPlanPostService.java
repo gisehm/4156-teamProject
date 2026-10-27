@@ -39,7 +39,7 @@ public final class MealPlanPostService {
   /**
    * Connects the local demo inputs to the team's storage abstraction.
    *
-   * @param storage shared storage
+   * @param storage    shared storage
    * @param candidates explicit local fixtures
    */
   public MealPlanPostService(
@@ -52,11 +52,11 @@ public final class MealPlanPostService {
   /**
    * Generates a complete schedule, then appends one shared MealPlan.
    *
-   * <p>Synchronization prevents lost appends within this service instance.
+   * Synchronization prevents lost appends within this service instance.
    * This is not a database transaction or a multi-instance storage lock.
    *
    * @param clientId authenticated owning client
-   * @param request validated constraints
+   * @param request  validated constraints
    * @return the stored plan, with the UUID used by GET and DELETE
    * @throws IOException if existing data is invalid or cannot be written
    */
@@ -76,7 +76,8 @@ public final class MealPlanPostService {
         request.maxPrepTimeMins(), schedule);
 
     List<MealPlan> previous = mapper.readValue(
-        storage.readFile(PLANS_FILE), new TypeReference<>() { });
+        storage.readFile(PLANS_FILE), new TypeReference<>() {
+        });
     if (previous == null || previous.stream().anyMatch(p -> p == null)) {
       throw new IOException("mealplans.json must contain a plan array");
     }

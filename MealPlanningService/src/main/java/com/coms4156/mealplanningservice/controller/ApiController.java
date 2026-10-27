@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,9 +44,9 @@ public final class ApiController {
    *
    * @param request the request body containing the client name
    * @return 201 with client_id, name and api_key; 400 if the name is missing
-   *     or blank; 409 if the name is already registered
+   *         or blank; 409 if the name is already registered
    * @throws IOException if the clients file cannot be read or written,
-   *     which Spring maps to 500
+   *                     which Spring maps to 500
    */
   @PostMapping("/clients")
   public ResponseEntity<?> registerClient(
@@ -71,19 +72,18 @@ public final class ApiController {
    * Retrieves a saved meal plan. The API key must belong to the client in
    * the path, and the plan must belong to that client.
    *
-   * @param apiKey the X-API-Key header value
-   * @param clientId the ID of the client that owns the meal plan
+   * @param apiKey     the X-API-Key header value
+   * @param clientId   the ID of the client that owns the meal plan
    * @param mealPlanId the ID of the meal plan to retrieve
    * @return 200 with the meal plan; 401 if the API key is missing or
-   *     unknown; 403 if the key belongs to a different client; 404 if this
-   *     client has no meal plan with that ID
+   *         unknown; 403 if the key belongs to a different client; 404 if this
+   *         client has no meal plan with that ID
    * @throws IOException if a storage file cannot be read, which Spring maps
-   *     to 500
+   *                     to 500
    */
   @GetMapping("/clients/{client_id}/mealplan/{mealplan_id}")
   public ResponseEntity<?> getMealPlan(
-      @RequestHeader(value = "X-API-Key", required = false)
-          final String apiKey,
+      @RequestHeader(value = "X-API-Key", required = false) final String apiKey,
       @PathVariable("client_id") final String clientId,
       @PathVariable("mealplan_id") final String mealPlanId)
       throws IOException {
@@ -107,19 +107,18 @@ public final class ApiController {
    * The API key must belong to the client in the path. In this iteration
    * the recipe is returned but not saved to the client's library.
    *
-   * @param apiKey the X-API-Key header value
+   * @param apiKey   the X-API-Key header value
    * @param clientId the ID of the client making the request
-   * @param request the recipe constraints
+   * @param request  the recipe constraints
    * @return 200 with the recipe; 400 if the request is invalid; 401 if the
-   *     API key is missing or unknown; 403 if the key belongs to a different
-   *     client; 404 if no recipe matches
+   *         API key is missing or unknown; 403 if the key belongs to a different
+   *         client; 404 if no recipe matches
    * @throws IOException if a storage file cannot be read, which Spring maps
-   *     to 500
+   *                     to 500
    */
   @PostMapping("/clients/{client_id}/recipes")
   public ResponseEntity<?> findRecipe(
-      @RequestHeader(value = "X-API-Key", required = false)
-          final String apiKey,
+      @RequestHeader(value = "X-API-Key", required = false) final String apiKey,
       @PathVariable("client_id") final String clientId,
       @RequestBody(required = false) final FindRecipeRequest request)
       throws IOException {
@@ -134,13 +133,39 @@ public final class ApiController {
     }
     try {
       return mealPlanningService.findRecipe(request)
-          .<ResponseEntity<?>>map(recipe ->
-              ResponseEntity.ok(RecipeResponse.from(recipe)))
+          .<ResponseEntity<?>>map(recipe -> ResponseEntity.ok(RecipeResponse.from(recipe)))
           .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
               .body(Map.of("error", "no recipe matches the constraints")));
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest()
           .body(Map.of("error", e.getMessage()));
     }
+  }
+
+  /**
+   * Deletes a client's mealplan by ID.
+   * 
+   * @param apiKey     the API key
+   * @param clientId   the client ID
+   * @param mealplanId the mealplan ID
+   * @return the delete request response
+   * @throws IOException if an I/O error occurs
+   */
+  @DeleteMapping("/clients/{client_id}/mealplan/{mealplan_id}")
+  public ResponseEntity<Void> deleteItem(
+      @RequestHeader(value = "X-API-Key", required = false) final String apiKey,
+      @PathVariable("client_id") final String clientId,
+      @PathVariable("mealplan_id") final String mealplanId) throws IOException {
+
+    Optional<Client> caller = mealPlanningService.authenticate(apiKey);
+    if (caller.isEmpty() || !clientId.equals(caller.get().getId())) {
+      return ResponseEntity.notFound().build();
+    }
+
+    boolean deleted = mealPlanningService.deleteMealplan(clientId, mealplanId);
+    if (!deleted) {
+      return ResponseEntity.notFound().build();
+    }
+    return ResponseEntity.noContent().build();
   }
 }
