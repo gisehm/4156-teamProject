@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Response body returned after registering a client.
  *
- * <p>Kept separate from {@link Client} so the API can use snake_case field
+ * Kept separate from {@link Client} so the API can use snake_case field
  * names (client_id, api_key) without changing the stored clients.json format.
  */
 public final class ClientResponse {

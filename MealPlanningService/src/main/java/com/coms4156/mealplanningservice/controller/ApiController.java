@@ -3,6 +3,8 @@ package com.coms4156.mealplanningservice.controller;
 import com.coms4156.mealplanningservice.model.Client;
 import com.coms4156.mealplanningservice.model.ClientResponse;
 import com.coms4156.mealplanningservice.model.CreateClientRequest;
+import com.coms4156.mealplanningservice.model.FindRecipeRequest;
+import com.coms4156.mealplanningservice.model.RecipeResponse;
 import com.coms4156.mealplanningservice.service.DuplicateClientException;
 import com.coms4156.mealplanningservice.service.MealPlanningService;
 import java.io.IOException;
@@ -98,5 +100,47 @@ public final class ApiController {
         .<ResponseEntity<?>>map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(Map.of("error", "meal plan not found")));
+  }
+
+  /**
+   * Finds the catalog recipe that best matches the client's constraints.
+   * The API key must belong to the client in the path. In this iteration
+   * the recipe is returned but not saved to the client's library.
+   *
+   * @param apiKey the X-API-Key header value
+   * @param clientId the ID of the client making the request
+   * @param request the recipe constraints
+   * @return 200 with the recipe; 400 if the request is invalid; 401 if the
+   *     API key is missing or unknown; 403 if the key belongs to a different
+   *     client; 404 if no recipe matches
+   * @throws IOException if a storage file cannot be read, which Spring maps
+   *     to 500
+   */
+  @PostMapping("/clients/{client_id}/recipes")
+  public ResponseEntity<?> findRecipe(
+      @RequestHeader(value = "X-API-Key", required = false)
+          final String apiKey,
+      @PathVariable("client_id") final String clientId,
+      @RequestBody(required = false) final FindRecipeRequest request)
+      throws IOException {
+    Optional<Client> caller = mealPlanningService.authenticate(apiKey);
+    if (caller.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body(Map.of("error", "a valid X-API-Key header is required"));
+    }
+    if (!clientId.equals(caller.get().getId())) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN)
+          .body(Map.of("error", "this API key cannot access that client"));
+    }
+    try {
+      return mealPlanningService.findRecipe(request)
+          .<ResponseEntity<?>>map(recipe ->
+              ResponseEntity.ok(RecipeResponse.from(recipe)))
+          .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+              .body(Map.of("error", "no recipe matches the constraints")));
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest()
+          .body(Map.of("error", e.getMessage()));
+    }
   }
 }

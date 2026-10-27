@@ -1,11 +1,14 @@
 package com.coms4156.mealplanningservice.service;
 
+import com.coms4156.mealplanningservice.model.CatalogRecipe;
 import com.coms4156.mealplanningservice.model.Client;
+import com.coms4156.mealplanningservice.model.FindRecipeRequest;
 import com.coms4156.mealplanningservice.model.MealPlan;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,6 +23,9 @@ public class MealPlanningService {
 
   /** Name of the file that stores the saved meal plans. */
   private static final String MEAL_PLANS_FILE = "mealplans.json";
+
+  /** Name of the file that stores the recipe catalog. */
+  private static final String CATALOG_FILE = "food_recipes.json";
 
   /** The object mapper. */
   private final ObjectMapper objectMapper = new ObjectMapper();
@@ -85,7 +91,7 @@ public class MealPlanningService {
   /**
    * Registers a new client with a generated client ID and API key.
    *
-   * <p>Synchronized so that two concurrent requests cannot both pass the
+   * Synchronized so that two concurrent requests cannot both pass the
    * duplicate-name check before either one writes the clients file.
    *
    * @param name the client name; surrounding whitespace is trimmed
@@ -133,5 +139,104 @@ public class MealPlanningService {
     List<Client> clients = objectMapper.readValue(
         storageService.readFile(CLIENTS_FILE), new TypeReference<>() { });
     return new ArrayList<>(clients);
+  }
+
+  /**
+   * Finds the catalog recipe that best matches the given constraints.
+   *
+   * A candidate must match the meal type (ignoring case), take at most
+   * max_prep_time_mins, contain none of the allergens and satisfy every
+   * diet. Recipes with a missing (zero) total time are skipped. Among the
+   * candidates, the one with the shortest total time wins, with the recipe
+   * ID as a tie-break. max_calories is validated but not enforced until
+   * nutrition data is available.
+   *
+   * @param request the recipe constraints
+   * @return the best matching recipe, or empty if no recipe matches
+   * @throws IllegalArgumentException if the request is invalid
+   * @throws IOException if the catalog file cannot be read
+   */
+  public Optional<CatalogRecipe> findRecipe(final FindRecipeRequest request)
+      throws IOException {
+    validateFindRecipeRequest(request);
+    String mealType = request.getMealType().trim();
+    Integer maxPrepTimeMins = request.getMaxPrepTimeMins();
+    List<String> diets = valueOrEmpty(request.getDietTypes());
+    List<String> allergens = valueOrEmpty(request.getAllergens());
+
+    return readCatalog().stream()
+        .filter(recipe -> mealType.equalsIgnoreCase(recipe.getCourse()))
+        .filter(recipe -> recipe.getTotalTimeMins() > 0)
+        .filter(recipe -> maxPrepTimeMins == null
+            || recipe.getTotalTimeMins() <= maxPrepTimeMins)
+        .filter(recipe ->
+            AllergenChecker.isFreeOf(recipe.ingredientList(), allergens))
+        .filter(recipe -> DietChecker.satisfiesAll(recipe, diets))
+        .min(Comparator.comparingInt(CatalogRecipe::getTotalTimeMins)
+            .thenComparing(CatalogRecipe::getId));
+  }
+
+  /**
+   * Checks that a find-recipe request is complete and uses supported tags.
+   *
+   * @param request the recipe constraints
+   * @throws IllegalArgumentException if the request is invalid
+   */
+  private void validateFindRecipeRequest(final FindRecipeRequest request) {
+    if (request == null) {
+      throw new IllegalArgumentException("a JSON request body is required");
+    }
+    if (request.getMealType() == null || request.getMealType().isBlank()) {
+      throw new IllegalArgumentException("meal_type is required");
+    }
+    requirePositive(request.getMaxCalories(), "max_calories");
+    requirePositive(request.getMaxPrepTimeMins(), "max_prep_time_mins");
+    // Null tags are checked first: Set.of(...).contains(null) throws.
+    for (String diet : valueOrEmpty(request.getDietTypes())) {
+      if (diet == null || !DietChecker.supportedDiets().contains(diet)) {
+        throw new IllegalArgumentException("unsupported diet_type: " + diet);
+      }
+    }
+    for (String allergen : valueOrEmpty(request.getAllergens())) {
+      if (allergen == null
+          || !AllergenChecker.supportedAllergens().contains(allergen)) {
+        throw new IllegalArgumentException(
+            "unsupported allergen: " + allergen);
+      }
+    }
+  }
+
+  /**
+   * Checks that an optional number is positive when it is given.
+   *
+   * @param value the number, may be null
+   * @param field the request field name, used in the error message
+   * @throws IllegalArgumentException if the number is zero or negative
+   */
+  private static void requirePositive(final Integer value, final String field) {
+    if (value != null && value <= 0) {
+      throw new IllegalArgumentException(field + " must be positive");
+    }
+  }
+
+  /**
+   * Returns the list, or an empty list if it is null.
+   *
+   * @param values the list, may be null
+   * @return the list, or an empty list
+   */
+  private static List<String> valueOrEmpty(final List<String> values) {
+    return values == null ? List.of() : values;
+  }
+
+  /**
+   * Reads all recipes from the catalog file.
+   *
+   * @return the catalog recipes
+   * @throws IOException if the catalog file cannot be read
+   */
+  private List<CatalogRecipe> readCatalog() throws IOException {
+    return objectMapper.readValue(
+        storageService.readFile(CATALOG_FILE), new TypeReference<>() { });
   }
 }
