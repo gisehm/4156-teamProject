@@ -43,6 +43,37 @@ public class MealPlanningService {
   }
 
   /**
+   * Reads a list from a JSON file.
+   *
+   * @param <T>      the element type
+   * @param fileName the file name
+   * @param typeRef  the type reference
+   * @return the list
+   * @throws IOException if an I/O error occurs
+   */
+  private <T> List<T> readList(
+      final String fileName,
+      final TypeReference<List<T>> typeRef) throws IOException {
+    String json = storageService.readFile(fileName);
+    return objectMapper.readValue(json, typeRef);
+  }
+
+  /**
+   * Writes a list to a JSON file.
+   *
+   * @param <T>      the element type
+   * @param fileName the file name
+   * @param list     the list to write
+   * @throws IOException if an I/O error occurs
+   */
+  private <T> void writeList(final String fileName, final List<T> list)
+      throws IOException {
+    String json = objectMapper
+        .writerWithDefaultPrettyPrinter().writeValueAsString(list);
+    storageService.writeFile(fileName, json);
+  }
+
+  /**
    * Finds the client that owns the given API key.
    *
    * @param apiKey the key from the X-API-Key header, may be null
@@ -54,9 +85,9 @@ public class MealPlanningService {
     if (apiKey == null || apiKey.isBlank()) {
       return Optional.empty();
     }
-    List<Client> clients =
-        objectMapper.readValue(
-            storageService.readFile(CLIENTS_FILE), new TypeReference<>() { });
+    List<Client> clients = objectMapper.readValue(
+        storageService.readFile(CLIENTS_FILE), new TypeReference<>() {
+        });
     return clients.stream()
         .filter(client -> apiKey.equals(client.getApiKey()))
         .findFirst();
@@ -65,10 +96,10 @@ public class MealPlanningService {
   /**
    * Finds a saved meal plan that belongs to the given client.
    *
-   * <p>A plan owned by a different client is treated as not found, so one
+   * A plan owned by a different client is treated as not found, so one
    * client cannot learn whether another client's plan ID exists.
    *
-   * @param clientId the ID of the client that must own the plan
+   * @param clientId   the ID of the client that must own the plan
    * @param mealPlanId the ID of the meal plan to find
    * @return the meal plan, or empty if the client has no plan with that ID
    * @throws IOException if the meal plans file cannot be read
@@ -78,10 +109,10 @@ public class MealPlanningService {
     if (clientId == null || mealPlanId == null) {
       return Optional.empty();
     }
-    List<MealPlan> mealPlans =
-        objectMapper.readValue(
-            storageService.readFile(MEAL_PLANS_FILE),
-            new TypeReference<>() { });
+    List<MealPlan> mealPlans = objectMapper.readValue(
+        storageService.readFile(MEAL_PLANS_FILE),
+        new TypeReference<>() {
+        });
     return mealPlans.stream()
         .filter(plan -> clientId.equals(plan.getClientId()))
         .filter(plan -> mealPlanId.equals(plan.getId()))
@@ -98,8 +129,9 @@ public class MealPlanningService {
    * @return the stored client, including its generated ID and API key
    * @throws IllegalArgumentException if the name is null or blank
    * @throws DuplicateClientException if the name is already registered,
-   *     compared case-insensitively
-   * @throws IOException if the clients file cannot be read or written
+   *                                  compared case-insensitively
+   * @throws IOException              if the clients file cannot be read or
+   *                                  written
    */
   public synchronized Client registerClient(final String name)
       throws IOException {
@@ -130,6 +162,31 @@ public class MealPlanningService {
   }
 
   /**
+   * Deletes a client's mealplan by ID.
+   *
+   * @param clientId   the client ID
+   * @param mealplanId the mealplan ID
+   * @return true if deleted
+   * @throws IOException if an I/O error occurs
+   */
+  public boolean deleteMealplan(
+      final String clientId, final String mealplanId) throws IOException {
+    List<MealPlan> mealplans = readList(
+        "mealplans.json", new TypeReference<>() {
+        });
+
+    boolean removed = mealplans
+        .removeIf(mealplan -> mealplan.getClientId()
+            .equals(clientId) && mealplan.getId().equals(mealplanId));
+
+    if (removed) {
+      writeList("mealplans.json", mealplans);
+    }
+
+    return removed;
+  }
+
+  /**
    * Reads all registered clients from storage.
    *
    * @return a mutable list of clients
@@ -137,7 +194,8 @@ public class MealPlanningService {
    */
   private List<Client> readClients() throws IOException {
     List<Client> clients = objectMapper.readValue(
-        storageService.readFile(CLIENTS_FILE), new TypeReference<>() { });
+        storageService.readFile(CLIENTS_FILE), new TypeReference<>() {
+        });
     return new ArrayList<>(clients);
   }
 
