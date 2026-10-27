@@ -111,8 +111,8 @@ public final class ApiController {
    * @param clientId the ID of the client making the request
    * @param request  the recipe constraints
    * @return 200 with the recipe; 400 if the request is invalid; 401 if the
-   *         API key is missing or unknown; 403 if the key belongs to a different
-   *         client; 404 if no recipe matches
+   *         API key is missing or unknown; 403 if the key belongs to a
+   *         different client; 404 if no recipe matches
    * @throws IOException if a storage file cannot be read, which Spring maps
    *                     to 500
    */
@@ -133,7 +133,8 @@ public final class ApiController {
     }
     try {
       return mealPlanningService.findRecipe(request)
-          .<ResponseEntity<?>>map(recipe -> ResponseEntity.ok(RecipeResponse.from(recipe)))
+          .<ResponseEntity<?>>map(recipe -> ResponseEntity
+              .ok(RecipeResponse.from(recipe)))
           .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
               .body(Map.of("error", "no recipe matches the constraints")));
     } catch (IllegalArgumentException e) {
