@@ -40,6 +40,12 @@ http://localhost:8080 /endpoint
 
 Specific Tests confirming proper returning of HTTP status codes and content types are ran during Continuous Integration as well.
 
+The collection is `MealPlanningService/postman/MealPlanningService.postman_collection.json`. It registers two clients, then checks the success, 400, 401, 403, 404 and 409 responses of the client, meal plan and recipe endpoints, with assertions on each status code and, for errors, the message. The requests depend on each other (client A and B, then the plan), so run them in order.
+
+1. Start the service with the demo profile, which POST /mealplan needs, and a private data folder containing `clients.json` and `mealplans.json` (each just `[]`) so the committed seed data is not changed:
+   `java -jar target/MealPlanningService-0.0.1-SNAPSHOT.jar --spring.profiles.active=local,mealplan-demo --storage.local-directory=/absolute/path/to/private-data --server.address=127.0.0.1 --server.port=8080`
+2. Import the collection into Postman and run it with the Collection Runner, or from the command line: `newman run MealPlanningService/postman/MealPlanningService.postman_collection.json --env-var baseUrl=http://127.0.0.1:8080`
+
 ## API Endpoints
 
 All endpoints are under `/v1`. Every endpoint except `POST /v1/clients` needs an `X-API-Key` header holding the API key of a registered client. A client can only reach its own data: its key must match the `client_id` in the URL. Errors are returned as JSON in the form `{"error": "<message>"}`.

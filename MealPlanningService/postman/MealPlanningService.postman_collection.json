@@ -1,0 +1,796 @@
+{
+  "info": {
+    "name": "Meal Planning Service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Clients",
+      "item": [
+        {
+          "name": "Register client A",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"{{nameA}}\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.collectionVariables.set(\"clientId\", b.client_id);",
+                  "pm.collectionVariables.set(\"apiKey\", b.api_key);"
+                ]
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const n = Date.now();",
+                  "pm.collectionVariables.set(\"nameA\", \"postman-a-\" + n);",
+                  "pm.collectionVariables.set(\"nameB\", \"postman-b-\" + n);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register client B",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"{{nameB}}\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.collectionVariables.set(\"otherClientId\", b.client_id);",
+                  "pm.collectionVariables.set(\"otherApiKey\", b.api_key);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register duplicate name",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"{{nameA}}\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register blank name",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"  \"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"error message\", () => pm.expect(pm.response.json().error).to.eql(\"name is required and must not be blank\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Meal plans",
+      "item": [
+        {
+          "name": "POST mealplan (needs mealplan-demo profile)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients/{{clientId}}/mealplan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients",
+                "{{clientId}}",
+                "mealplan"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"time_frame\":\"day\",\"max_calories\":1800,\"diet_type\":[\"vegetarian\"],\"allergens\":[\"peanuts\"],\"max_prep_time_mins\":40}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 201\", () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.collectionVariables.set(\"mealPlanId\", b.id);",
+                  "pm.test(\"plan belongs to client\", () => pm.expect(b.clientId).to.eql(pm.collectionVariables.get(\"clientId\")));",
+                  "pm.test(\"plan has a schedule\", () => pm.expect(b.schedule).to.have.length.above(0));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST mealplan without key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients/{{clientId}}/mealplan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients",
+                "{{clientId}}",
+                "mealplan"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"time_frame\":\"day\",\"max_calories\":1800,\"diet_type\":[\"vegetarian\"],\"allergens\":[\"peanuts\"],\"max_prep_time_mins\":40}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"error message\", () => pm.expect(pm.response.json().error).to.eql(\"a valid X-API-Key header is required\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST mealplan with another client's key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{otherApiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients/{{clientId}}/mealplan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients",
+                "{{clientId}}",
+                "mealplan"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"time_frame\":\"day\",\"max_calories\":1800,\"diet_type\":[\"vegetarian\"],\"allergens\":[\"peanuts\"],\"max_prep_time_mins\":40}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"error message\", () => pm.expect(pm.response.json().error).to.eql(\"this API key cannot access that client\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST mealplan with bad time_frame",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients/{{clientId}}/mealplan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients",
+                "{{clientId}}",
+                "mealplan"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"time_frame\":\"month\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET mealplan",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients/{{clientId}}/mealplan/{{mealPlanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients",
+                "{{clientId}}",
+                "mealplan",
+                "{{mealPlanId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"returns the saved plan\", () => {",
+                  "  pm.expect(b.id).to.eql(pm.collectionVariables.get(\"mealPlanId\"));",
+                  "  pm.expect(b.clientId).to.eql(pm.collectionVariables.get(\"clientId\"));",
+                  "  pm.expect(b.timeFrame).to.eql(\"day\");",
+                  "  pm.expect(b.maxCalories).to.eql(1800);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET mealplan without key",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients/{{clientId}}/mealplan/{{mealPlanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients",
+                "{{clientId}}",
+                "mealplan",
+                "{{mealPlanId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"error message\", () => pm.expect(pm.response.json().error).to.eql(\"a valid X-API-Key header is required\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET mealplan with unknown key",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "not-a-real-key"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients/{{clientId}}/mealplan/{{mealPlanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients",
+                "{{clientId}}",
+                "mealplan",
+                "{{mealPlanId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"error message\", () => pm.expect(pm.response.json().error).to.eql(\"a valid X-API-Key header is required\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET mealplan with another client's key",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{otherApiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients/{{clientId}}/mealplan/{{mealPlanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients",
+                "{{clientId}}",
+                "mealplan",
+                "{{mealPlanId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"error message\", () => pm.expect(pm.response.json().error).to.eql(\"this API key cannot access that client\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET another client's plan",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{otherApiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients/{{otherClientId}}/mealplan/{{mealPlanId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients",
+                "{{otherClientId}}",
+                "mealplan",
+                "{{mealPlanId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"error message\", () => pm.expect(pm.response.json().error).to.eql(\"meal plan not found\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET unknown plan id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients/{{clientId}}/mealplan/no-such-plan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients",
+                "{{clientId}}",
+                "mealplan",
+                "no-such-plan"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"error message\", () => pm.expect(pm.response.json().error).to.eql(\"meal plan not found\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Recipes",
+      "item": [
+        {
+          "name": "POST recipes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients/{{clientId}}/recipes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients",
+                "{{clientId}}",
+                "recipes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"meal_type\":\"breakfast\",\"max_prep_time_mins\":30}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 200\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"returns a breakfast recipe\", () => {",
+                  "  pm.expect(b.recipe_id).to.be.a(\"string\");",
+                  "  pm.expect(b.meal_type).to.eql(\"breakfast\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST recipes without meal_type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients/{{clientId}}/recipes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients",
+                "{{clientId}}",
+                "recipes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"error message\", () => pm.expect(pm.response.json().error).to.eql(\"meal_type is required\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST recipes without key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients/{{clientId}}/recipes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients",
+                "{{clientId}}",
+                "recipes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"meal_type\":\"breakfast\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"error message\", () => pm.expect(pm.response.json().error).to.eql(\"a valid X-API-Key header is required\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST recipes with another client's key",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{otherApiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/v1/clients/{{clientId}}/recipes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "v1",
+                "clients",
+                "{{clientId}}",
+                "recipes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"meal_type\":\"breakfast\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"status is 403\", () => pm.response.to.have.status(403));",
+                  "pm.test(\"error message\", () => pm.expect(pm.response.json().error).to.eql(\"this API key cannot access that client\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "nameA",
+      "value": ""
+    },
+    {
+      "key": "nameB",
+      "value": ""
+    },
+    {
+      "key": "clientId",
+      "value": ""
+    },
+    {
+      "key": "apiKey",
+      "value": ""
+    },
+    {
+      "key": "otherClientId",
+      "value": ""
+    },
+    {
+      "key": "otherApiKey",
+      "value": ""
+    },
+    {
+      "key": "mealPlanId",
+      "value": ""
+    },
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8080"
+    }
+  ]
+}
