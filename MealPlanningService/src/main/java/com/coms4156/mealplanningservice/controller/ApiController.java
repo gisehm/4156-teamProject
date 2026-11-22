@@ -153,19 +153,26 @@ public final class ApiController {
    * @throws IOException if an I/O error occurs
    */
   @DeleteMapping("/clients/{client_id}/mealplan/{mealplan_id}")
-  public ResponseEntity<Void> deleteItem(
+  public ResponseEntity<?> deleteMealPlan(
       @RequestHeader(value = "X-API-Key", required = false) final String apiKey,
       @PathVariable("client_id") final String clientId,
       @PathVariable("mealplan_id") final String mealplanId) throws IOException {
 
     Optional<Client> caller = mealPlanningService.authenticate(apiKey);
-    if (caller.isEmpty() || !clientId.equals(caller.get().getId())) {
-      return ResponseEntity.notFound().build();
+    if (caller.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body(Map.of("error", "a valid X-API-Key header is required"));
+    }
+    if (!clientId.equals(caller.get().getId())) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN)
+          .body(Map.of("error", "this API key cannot access that client"));
     }
 
     boolean deleted = mealPlanningService.deleteMealplan(clientId, mealplanId);
+
     if (!deleted) {
-      return ResponseEntity.notFound().build();
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(Map.of("error", "meal plan not found"));
     }
     return ResponseEntity.noContent().build();
   }

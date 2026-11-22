@@ -61,20 +61,20 @@ class MealPlanningServiceUnitTests {
   }
 
   @Test
-  void testDeleteItem() throws Exception {
+  void testDeleteMealplan() throws Exception {
     // delete mealplan with valid id
-    boolean deleteItem1 = service.deleteMealplan("client-1", "plan-1");
+    boolean deleteMealplan1 = service.deleteMealplan("client-1", "plan-1");
 
-    assertEquals(true, deleteItem1);
+    assertEquals(true, deleteMealplan1);
 
     // delete mealplan with invalid client id
-    boolean deleteItem2 = service.deleteMealplan("client-2", "plan-1");
+    boolean deleteMealplan2 = service.deleteMealplan("client-2", "plan-1");
 
-    assertEquals(false, deleteItem2);
+    assertEquals(false, deleteMealplan2);
 
     // delete mealplan with invalid mealplan id
-    boolean deleteItem3 = service.deleteMealplan("client-1", "plan-2");
+    boolean deleteMealplan3 = service.deleteMealplan("client-1", "plan-2");
 
-    assertEquals(false, deleteItem3);
+    assertEquals(false, deleteMealplan3);
   }
 }
