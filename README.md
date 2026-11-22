@@ -167,6 +167,22 @@ This repository using GitHub Actions to perform continous integration, to view t
 
 Click on the latest job on the top under "X workflow runs" then Click 'build' under jobs finally click the drop down next to all the action items to read the logs made during their execution
 
+## AI Usage
+
+### Nooraan Faizah
+
+### Yerzhan Abeyev
+
+### Ashton Damond Lollis
+
+### Giselle Muriel
+Did not use AI in creation of code, tests, or README documentation.
+
+### Yuwen Gong
+
+## Third-Party Code & Data
+* Food Recipes used for food_recipes.json: https://www.kaggle.com/datasets/sarthak71/food-recipes
+
 ## Tools Used
 
 This section includes notes on tools and technologies used in building this project, as well as any additional details if applicable.
