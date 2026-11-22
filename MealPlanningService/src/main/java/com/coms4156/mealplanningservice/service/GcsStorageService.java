@@ -62,6 +62,7 @@ public final class GcsStorageService implements StorageService {
   }
 
   /** {@inheritDoc} */
+  @Override
   public String readFile(final String fileName) {
     BlobId blobId = BlobId.of(bucketName, fileName);
     byte[] content = storage.readAllBytes(blobId);
@@ -69,6 +70,7 @@ public final class GcsStorageService implements StorageService {
   }
 
   /** {@inheritDoc} */
+  @Override
   public void writeFile(final String fileName, final String content) {
     BlobId blobId = BlobId.of(bucketName, fileName);
     BlobInfo blobInfo = BlobInfo
