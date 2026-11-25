@@ -4,9 +4,14 @@ import com.coms4156.mealplanningservice.model.CatalogRecipe;
 import com.coms4156.mealplanningservice.model.Client;
 import com.coms4156.mealplanningservice.model.FindRecipeRequest;
 import com.coms4156.mealplanningservice.model.MealPlan;
+import com.coms4156.mealplanningservice.mealplan.MealType;
+import com.coms4156.mealplanningservice.mealplan.PlannedDay;
+import com.coms4156.mealplanningservice.mealplan.PlanningRecipe;
+import com.coms4156.mealplanningservice.mealplan.UpdateMealplanRequest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -187,6 +192,76 @@ public class MealPlanningService {
   }
 
   /**
+   * Replace one recipe in a saved meal plan.
+   *
+   * @param clientId   the client ID
+   * @param mealplanId the mealplan ID
+   * @param request    the request including day, mealtype, and recipe id
+   * @return updated mealplan with one changed recipe
+   * @throws IllegalArgumentException if the request is invalid
+   * @throws IOException              if the catalog file cannot be read
+   */
+  public MealPlan updateMealplan(final String clientId, final String mealplanId,
+      final UpdateMealplanRequest request) throws IOException {
+
+    if (request == null) {
+      return null;
+    }
+
+    List<MealPlan> mealplans = readList("mealplans.json",
+        new TypeReference<>() {
+        });
+
+    MealPlan mealplan = mealplans.stream()
+        .filter(plan -> plan.getClientId().equals(clientId))
+        .filter(plan -> plan.getId().equals(mealplanId))
+        .findFirst()
+        .orElse(null);
+
+    List<CatalogRecipe> recipes = readList("food_recipes.json",
+        new TypeReference<>() {
+        });
+
+    CatalogRecipe newRecipe = recipes.stream()
+        .filter(recipe -> request.getRecipeId().equals(recipe.getId()))
+        .findFirst().orElse(null);
+
+    if (mealplan == null || newRecipe == null) {
+      return null;
+    }
+
+    PlanningRecipe newPlannedRecipe = new PlanningRecipe(newRecipe.getId(),
+        request.getMealtype(), BigDecimal.ZERO,
+        newRecipe.getTotalTimeMins());
+    List<PlannedDay> schedule = mealplan.getSchedule();
+    PlannedDay schedDay = schedule.get(request.getDayIndex());
+    PlannedDay updatedDay;
+
+    switch (request.getMealtype()) {
+      case MealType.BREAKFAST:
+        updatedDay = new PlannedDay(request.getDay(), newPlannedRecipe,
+            schedDay.lunch(), schedDay.dinner());
+        break;
+      case MealType.LUNCH:
+        updatedDay = new PlannedDay(request.getDay(), schedDay.breakfast(),
+            newPlannedRecipe, schedDay.dinner());
+        break;
+      case MealType.DINNER:
+        updatedDay = new PlannedDay(request.getDay(), schedDay.breakfast(),
+            schedDay.lunch(), newPlannedRecipe);
+        break;
+      default:
+        throw new IOException(": no valid mealtype given");
+    }
+
+    schedule.set(request.getDayIndex(), updatedDay);
+
+    writeList("mealplans.json", mealplans);
+
+    return mealplan;
+  }
+
+  /**
    * Reads all registered clients from storage.
    *
    * @return a mutable list of clients
@@ -212,7 +287,7 @@ public class MealPlanningService {
    * @param request the recipe constraints
    * @return the best matching recipe, or empty if no recipe matches
    * @throws IllegalArgumentException if the request is invalid
-   * @throws IOException if the catalog file cannot be read
+   * @throws IOException              if the catalog file cannot be read
    */
   public Optional<CatalogRecipe> findRecipe(final FindRecipeRequest request)
       throws IOException {
@@ -227,8 +302,8 @@ public class MealPlanningService {
         .filter(recipe -> recipe.getTotalTimeMins() > 0)
         .filter(recipe -> maxPrepTimeMins == null
             || recipe.getTotalTimeMins() <= maxPrepTimeMins)
-        .filter(recipe ->
-            AllergenChecker.isFreeOf(recipe.ingredientList(), allergens))
+        .filter(recipe -> AllergenChecker.isFreeOf(recipe.ingredientList(),
+            allergens))
         .filter(recipe -> DietChecker.satisfiesAll(recipe, diets))
         .min(Comparator.comparingInt(CatalogRecipe::getTotalTimeMins)
             .thenComparing(CatalogRecipe::getId));
@@ -295,6 +370,7 @@ public class MealPlanningService {
    */
   private List<CatalogRecipe> readCatalog() throws IOException {
     return objectMapper.readValue(
-        storageService.readFile(CATALOG_FILE), new TypeReference<>() { });
+        storageService.readFile(CATALOG_FILE), new TypeReference<>() {
+        });
   }
 }
