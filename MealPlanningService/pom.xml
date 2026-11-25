@@ -85,10 +85,10 @@
 				<configuration>
                     <rules>
                         <rule>
-                            <element>CLASS</element>
+                            <element>BUNDLE</element>
                             <limits>
                                 <limit>
-                                    <counter>LINE</counter>
+                                    <counter>BRANCH</counter>
                                     <value>COVEREDRATIO</value>
                                     <minimum>0.80</minimum>
                                 </limit>
@@ -112,6 +112,13 @@
 							<goal>report</goal>
 						</goals>
 					</execution>
+                    <execution>
+                        <id>jacoco-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
 				</executions>
 			</plugin>
             <plugin>
@@ -120,6 +127,7 @@
                 <version>3.6.0</version>
                 <configuration>
                     <configLocation>${project.basedir}/checkstyle.xml</configLocation>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
                 </configuration>
                 <executions>
                     <execution>

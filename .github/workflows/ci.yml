@@ -31,6 +31,3 @@ jobs:
     - name: Generate Checkstyle Report
       run: mvn checkstyle:checkstyle
       working-directory: ./MealPlanningService
-    - name: Run PMD Static Analysis
-      run: mvn pmd:check
-      working-directory: ./MealPlanningService

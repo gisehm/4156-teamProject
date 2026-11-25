@@ -136,7 +136,9 @@ Response (`200`):
 * Deletes a client's mealplan by ID.
 * Upon Success: HTTP 204 Status Code is returned.
 * Upon Failure: 
-    * HTTP 404 Status Code is returned if the mealplan ID, client ID or API Key does not exist or is invalid.
+    * HTTP 401 Status Code is returned if the API Key does not exist or is invalid.
+    * HTTP 403 Status Code is returned if the client ID does not exist or is invalid.
+    * HTTP 404 Status Code is returned if the mealplan ID does not exist or is invalid.
 
 ## Style Checking Report
 
