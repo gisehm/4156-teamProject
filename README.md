@@ -130,7 +130,7 @@ Response (`200`):
 | Client B's key and client B's ID, but client A's plan ID | 404 `{"error":"meal plan not found"}` | The plan is not B's, and the service does not reveal that it exists |
 | A plan ID that does not exist | 404 `{"error":"meal plan not found"}` | There is nothing to return |
 
-### DELETE /v1/items/{id}
+### DELETE /v1/clients/{client_id}/mealplan/{mealplan_id}
 * Expected Input Parameters: apiKey ("X-API-Key" final String in the request header), clientId (final String in path variable), mealplanId (final String in path variable)
 * Expected Output: HTTP 204 No Content status code
 * Deletes a client's mealplan by ID.
