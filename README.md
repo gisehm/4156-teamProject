@@ -130,13 +130,15 @@ Response (`200`):
 | Client B's key and client B's ID, but client A's plan ID | 404 `{"error":"meal plan not found"}` | The plan is not B's, and the service does not reveal that it exists |
 | A plan ID that does not exist | 404 `{"error":"meal plan not found"}` | There is nothing to return |
 
-### DELETE /v1/items/{id}
+### DELETE /v1/clients/{client_id}/mealplan/{mealplan_id}
 * Expected Input Parameters: apiKey ("X-API-Key" final String in the request header), clientId (final String in path variable), mealplanId (final String in path variable)
 * Expected Output: HTTP 204 No Content status code
 * Deletes a client's mealplan by ID.
 * Upon Success: HTTP 204 Status Code is returned.
 * Upon Failure: 
-    * HTTP 404 Status Code is returned if the mealplan ID, client ID or API Key does not exist or is invalid.
+    * HTTP 401 Status Code is returned if the API Key does not exist or is invalid.
+    * HTTP 403 Status Code is returned if the client ID does not exist or is invalid.
+    * HTTP 404 Status Code is returned if the mealplan ID does not exist or is invalid.
 
 ## Style Checking Report
 
@@ -166,6 +168,22 @@ With JDK 25 selected, run `sh mvnw clean verify` from `MealPlanningService`.
 This repository using GitHub Actions to perform continous integration, to view the latest results go to the following link: https://github.com/gisehm/4156-teamProject/actions/workflows/ci.yml
 
 Click on the latest job on the top under "X workflow runs" then Click 'build' under jobs finally click the drop down next to all the action items to read the logs made during their execution
+
+## AI Usage
+
+### Nooraan Faizah
+
+### Yerzhan Abeyev
+
+### Ashton Damond Lollis
+
+### Giselle Muriel
+Did not use AI in creation of code, tests, or README documentation.
+
+### Yuwen Gong
+
+## Third-Party Code & Data
+* Food Recipes used for food_recipes.json: https://www.kaggle.com/datasets/sarthak71/food-recipes
 
 ## Tools Used
 
