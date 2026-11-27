@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class FindMealPlanServiceTests {
 
+  /** Two stored meal plans owned by different clients. */
   private static final String MEAL_PLANS_JSON =
       "[{\"id\":\"plan-1\",\"clientId\":\"client-1\",\"timeFrame\":\"week\","
           + "\"diet\":[\"Vegetarian\"],\"allergens\":[\"peanuts\"],"
@@ -36,8 +37,10 @@ class FindMealPlanServiceTests {
           + "{\"id\":\"plan-2\",\"clientId\":\"client-2\","
           + "\"timeFrame\":\"day\",\"schedule\":[]}]";
 
+  /** Mocked storage that returns the test JSON. */
   @Mock private StorageService storageService;
 
+  /** Service under test. */
   private MealPlanningService service;
 
   @BeforeEach

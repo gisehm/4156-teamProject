@@ -32,12 +32,16 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 @ExtendWith(MockitoExtension.class)
 class GetMealPlanControllerTests {
 
+  /** URL of the meal plan requested in most tests. */
   private static final String URL = "/v1/clients/client-1/mealplan/plan-1";
 
+  /** Mocked service behind the controller. */
   @Mock private MealPlanningService mealPlanningService;
 
+  /** MockMvc for sending requests to the controller. */
   private MockMvc mockMvc;
 
+  /** Meal plan returned by the mocked service. */
   private MealPlan plan;
 
   @BeforeEach

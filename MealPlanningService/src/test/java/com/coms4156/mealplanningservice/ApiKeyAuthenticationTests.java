@@ -21,12 +21,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ApiKeyAuthenticationTests {
 
+  /** Two stored clients, each with its own API key. */
   private static final String CLIENTS_JSON =
       "[{\"id\":\"client-1\",\"name\":\"John\",\"apiKey\":\"key-1\"},"
           + "{\"id\":\"client-2\",\"name\":\"Mary\",\"apiKey\":\"key-2\"}]";
 
+  /** Mocked storage that returns the test JSON. */
   @Mock private StorageService storageService;
 
+  /** Service under test. */
   private MealPlanningService service;
 
   @BeforeEach
