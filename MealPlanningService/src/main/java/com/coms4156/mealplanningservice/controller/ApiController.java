@@ -1,10 +1,12 @@
 package com.coms4156.mealplanningservice.controller;
 
+import com.coms4156.mealplanningservice.mealplan.UpdateMealplanRequest;
 import com.coms4156.mealplanningservice.model.Client;
 import com.coms4156.mealplanningservice.model.ClientResponse;
 import com.coms4156.mealplanningservice.model.CreateClientRequest;
 import com.coms4156.mealplanningservice.model.FindRecipeRequest;
 import com.coms4156.mealplanningservice.model.RecipeResponse;
+import com.coms4156.mealplanningservice.model.MealPlan;
 import com.coms4156.mealplanningservice.service.DuplicateClientException;
 import com.coms4156.mealplanningservice.service.MealPlanningService;
 import java.io.IOException;
@@ -13,6 +15,7 @@ import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -175,5 +178,47 @@ public final class ApiController {
           .body(Map.of("error", "meal plan not found"));
     }
     return ResponseEntity.noContent().build();
+  }
+
+  /**
+   * Updates one recipe in a meal plan.
+   * 
+   * @param apiKey     the API key
+   * @param clientId   the client ID
+   * @param mealplanId the mealplan ID
+   * @param request    the update mealplan request body
+   * @return the updated meal plan
+   * @throws IOException if an I/O error occurs
+   */
+  @PatchMapping("/clients/{client_id}/mealplan/{mealplan_id}")
+  public ResponseEntity<?> updateMealPlan(
+      @RequestHeader(value = "X-API-Key", required = false) final String apiKey,
+      @PathVariable("client_id") final String clientId,
+      @PathVariable("mealplan_id") final String mealplanId,
+      @RequestBody(required = false) final UpdateMealplanRequest request)
+      throws IOException {
+    Optional<Client> caller = mealPlanningService.authenticate(apiKey);
+    if (caller.isEmpty()) {
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+          .body(Map.of("error", "a valid X-API-Key header is required"));
+    }
+    if (!clientId.equals(caller.get().getId())) {
+      return ResponseEntity.status(HttpStatus.FORBIDDEN)
+          .body(Map.of("error", "this API key cannot access that client"));
+    }
+    if (request == null) {
+      return ResponseEntity.badRequest()
+          .body(Map.of("error", "request can't be null"));
+    }
+
+    MealPlan mealplan = mealPlanningService
+        .updateMealplan(clientId, mealplanId, request);
+
+    if (mealplan == null) {
+      return ResponseEntity.status(HttpStatus.NOT_FOUND)
+          .body(Map.of("error", "meal plan not found"));
+    }
+
+    return ResponseEntity.ok(mealplan);
   }
 }

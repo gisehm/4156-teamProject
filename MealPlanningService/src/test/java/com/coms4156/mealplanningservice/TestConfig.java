@@ -8,6 +8,11 @@ import org.springframework.context.annotation.Primary;
 @TestConfiguration
 public class TestConfig {
 
+  /**
+   * Local storage service bean for testing.
+   * 
+   * @return a LocalStorageService instance
+   */
   @Bean
   @Primary
   public StorageService storageService() {
