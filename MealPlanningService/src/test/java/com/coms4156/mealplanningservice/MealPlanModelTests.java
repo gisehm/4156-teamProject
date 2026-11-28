@@ -18,10 +18,13 @@ import org.junit.jupiter.api.Test;
 /** Tests that a meal plan survives being written to and read from JSON. */
 class MealPlanModelTests {
 
+  /** JSON mapper used to write and read the plan. */
   private ObjectMapper objectMapper;
 
+  /** One planned day used in the schedule. */
   private PlannedDay monday;
 
+  /** Meal plan that is written to and read from JSON. */
   private MealPlan plan;
 
   @BeforeEach
