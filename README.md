@@ -140,6 +140,17 @@ Response (`200`):
     * HTTP 403 Status Code is returned if the client ID does not exist or is invalid.
     * HTTP 404 Status Code is returned if the mealplan ID does not exist or is invalid.
 
+### PATCH /v1/clients/{client_id}/mealplan/{mealplan_id}
+* Expected Input Parameters: apiKey ("X-API-Key" final String in the request header), clientId (final String in path variable), mealplanId (final String in path variable), request (final UpdateMealplanRequest in request body)
+* Expected Output: HTTP 200 OK status code
+* Updates a client's mealplan by changing a recipe.
+* Upon Success: HTTP 200 Status Code is returned.
+* Upon Failure: 
+    * HTTP 400 Status Code is returned if request is null/empty.
+    * HTTP 401 Status Code is returned if the API Key does not exist or is invalid.
+    * HTTP 403 Status Code is returned if the client ID does not exist or is invalid.
+    * HTTP 404 Status Code is returned if the mealplan ID does not exist or is invalid, or if the request has an invalid or missing section.
+
 ## Style Checking Report
 
 We used the tool "checkstyle" to check the style of our code and generate style checking reports. Here is the report as of the day of 10/26/2026 ![Project Screenshot](reports/checkstylereport.png)
